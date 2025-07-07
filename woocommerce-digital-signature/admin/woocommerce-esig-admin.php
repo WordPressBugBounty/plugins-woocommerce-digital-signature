@@ -42,7 +42,7 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')) :
 
 
 
-            add_filter('woocommerce_get_settings_checkout', array($this, 'esignature_all_settings'), 10, 1);
+            add_filter('woocommerce_get_settings_advanced', array($this, 'esignature_all_settings'), 10, 1);
 
             add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_styles'));
 

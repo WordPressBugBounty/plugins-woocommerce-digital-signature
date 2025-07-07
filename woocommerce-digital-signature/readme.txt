@@ -3,8 +3,8 @@ Contributors: approveme
 Tags:  WooCommerce, Electronic Signature, electronic signatures Digital Signature,  Terms of Service and Privacy Policy, e-signature, e-signatures, Sign Documents Online, sign document, e-signatures, sign contract
 Requires at least: 5.1
 Tested up to: 6.8
-Stable tag: 1.8.1
-Version: 1.8.1
+Stable tag: 1.8.2
+Version: 1.8.2
 
 Automatically require your WooCommerce customers to sign a legally binding contract before downloading your product. Easy to Use.
 
@@ -227,6 +227,10 @@ Of Course. You’re welcome to ask any question you wish from our [contact form 
 **[Try WooCommerce Signature Demo Here](http://www.secure.approveme.com/demo/?utm_source=wprepo&utm_medium=link&utm_campaign=woocommerce)**
 
 == Changelog ==
+Version 1.8.2
+ADDED : New location for global agreement settings .
+FIX: Some minor bugs
+
 Version 1.8.1
 FIX: Some minor bugs
 
