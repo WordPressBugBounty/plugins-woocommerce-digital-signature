@@ -1,17 +1,17 @@
-=== WooCommerce Digital Signature === 
+=== Signature Add-On for WooCommerce === 
 Contributors: approveme
 Tags:  WooCommerce, Electronic Signature, electronic signatures Digital Signature,  Terms of Service and Privacy Policy, e-signature, e-signatures, Sign Documents Online, sign document, e-signatures, sign contract
 Requires at least: 5.1
 Tested up to: 6.8
-Stable tag: 1.8.2
-Version: 1.8.2
+Stable tag: 1.8.3
+Version: 1.8.3
 
 Automatically require your WooCommerce customers to sign a legally binding contract before downloading your product. Easy to Use.
 
 
 == Description ==
 
-**[Try WooCommerce Signature Demo Here](http://www.secure.approveme.com/demo/?utm_source=wprepo&utm_medium=link&utm_campaign=woocommerce)**
+**[Try the Digital Signature add-on for WooCommerce here](http://www.secure.approveme.com/demo/?utm_source=wprepo&utm_medium=link&utm_campaign=woocommerce)**
 
 **Do your customers have to sign a contract in order to purchase or download your WooCommerce product? This plugin makes that happen automatically every time someone buys – without you doing a thing.**
 
@@ -40,7 +40,7 @@ Automatically require your WooCommerce customers to sign a legally binding agree
 
 **Do the smart thing.  Don’t get caught in a courtroom with a document that’s not legally binding.**
 
-**Transform one single page of your existing WordPress website into a secure document and electronic signature application.  WP E-Signature by ApproveMe, is a free legally binding Wordpress Contract Plugin, that’s easy to use.**
+**Transform one single page of your existing WordPress website into a secure document and electronic signature application. **
 
 WP E-Signature has a very extensive e-signature feature library with dozens of expandable and customizable [e-signature automations](https://www.approveme.com/esign-integrations?utm_source=wprepo&utm_medium=link&utm_campaign=woocommerce) and [woo commerce e-signature automation options](http://www.secure.approveme.com/demo/woo-commerce-demo/?utm_source=wprepo&utm_medium=link&utm_campaign=woocommerce) to further enhance your custom document signing needs.
 
@@ -107,12 +107,12 @@ Free ebook:
 
 **All documents are encrypted and stored on your WordPress website (not somebody else’s)**
 
-Learn more about the WP E-Signature document security here: (https://www.approveme.com/security-ueta-e-sign-protection/?utm_source=wprepo&utm_medium=link&utm_campaign=woocommerce)
+[WP E-Signature document security here] [https://www.approveme.com/security-ueta-e-sign-protection/?utm_source=wprepo&utm_medium=link&utm_campaign=woocommerce]
 
 Free ebook:
 [7 Ways to Protect Your Company from Contracts That Aren’t Binding](https://www.approveme.com/free-ebook-digital-e-signature-is-it-legal/?utm_source=wprepo&utm_medium=link&utm_campaign=woocommerce)
 
-*A valid WP E-Signature license is required for this WooCommerce Digital Signature plugin to work.  You can easily purchase yours at (www.approveme.com)*
+*A valid WP E-Signature license is required for this Digital Signature Add-on for WooCommerce plugin to work.  You can easily purchase yours at (www.approveme.com)*
 
 **No Monthly Fees • UETA & ESIGN Compliant • Legally Binding • Money Back Guarantee**
 
@@ -121,14 +121,14 @@ Free ebook:
 
 ###How it Works:###
 
-**[Try WooCommerce Signature Demo Here](http://www.secure.approveme.com/demo/?utm_source=wprepo&utm_medium=link&utm_campaign=woocommerce)**
+**[Try the Digital Signature add-on for WooCommerce here](http://www.secure.approveme.com/demo/?utm_source=wprepo&utm_medium=link&utm_campaign=woocommerce)**
 
-*WooCommerce Digital Signature plugin is incredibly easy to setup. Once you have a valid ApproveMe license you can easily create and attach legally binding (court recognized) contracts to ANY WooCommerce product or download and require your customers to first sign your legal contract before ordering your product.*
+*Signature Add-on for WooCommerce plugin is incredibly easy to setup. Once you have a valid ApproveMe license you can easily create and attach legally binding (court recognized) contracts to ANY WooCommerce product or download and require your customers to first sign your legal contract before ordering your product.*
 
-###Follow these easy WooCommerce Digital Signature Plugin steps to get started###
+###Follow these easy Signature Add-on for WooCommerce Plugin steps to get started###
 
 **Step 1:**
-*Download and Install ‘WooCommerce Digital Signature’ + WP E-Signature (Elite or Lifetime license)*
+*Download and Install ‘Signature Add-on for WooCommerce’ + WP E-Signature (Elite or Lifetime license)*
 
 **Step 2:**
 *Create a WordPress page that will store your new document*
@@ -144,7 +144,6 @@ Free ebook:
 
 [vimeo https://vimeo.com/130673517]
 
-##INSTALLATION COMPLETE!##
 
 All signed agreements can be saved as a PDF, attached to an email, automatically synced to a Dropbox account and more!  You decide how this should work!
 
@@ -158,7 +157,7 @@ All signed agreements can be saved as a PDF, attached to an email, automatically
 
 = Can I collect legally binding court recognized contracts from my WooCommerce plugin before someone checks out? =
 
-With ApproveMe’s WooCommerce Digital Signature plugin, along with a [WP E-Signature](https://www.approveme.com/?utm_source=wprepo&utm_medium=link&utm_campaign=woocommerce) license you can easily collect [UETA/ESIGN compliant](https://www.approveme.com/ueta-and-esign-act/?utm_source=wprepo&utm_medium=link&utm_campaign=woocommerce) signatures from your customers before they complete their WooCommerce checkout.
+With ApproveMe’s Signature Add-on for WooCommerce plugin, along with a [WP E-Signature](https://www.approveme.com/?utm_source=wprepo&utm_medium=link&utm_campaign=woocommerce) license you can easily collect [UETA/ESIGN compliant](https://www.approveme.com/ueta-and-esign-act/?utm_source=wprepo&utm_medium=link&utm_campaign=woocommerce) signatures from your customers before they complete their WooCommerce checkout.
 
 = What’s the Difference between the WP E-Signature vs. a Form Generation Plugin =
 
@@ -204,11 +203,11 @@ Renewing your license provides an additional year of support and software update
 
 Of Course. You’re welcome to ask any question you wish from our [contact form page](https://approveme.com/contact/?utm_source=wprepo&utm_medium=link&utm_campaign=woocommerce).
 
-**[Try WooCommerce Signature Demo Here](http://www.secure.approveme.com/demo/?utm_source=wprepo&utm_medium=link&utm_campaign=woocommerce)**
+**[Try the Digital Signature add-on for WooCommerce here](http://www.secure.approveme.com/demo/?utm_source=wprepo&utm_medium=link&utm_campaign=woocommerce)**
 
 == Screenshots ==
 
-**[Try WooCommerce Signature Demo Here](http://www.secure.approveme.com/demo/?utm_source=wprepo&utm_medium=link&utm_campaign=woocommerce)**
+**[Try the Digital Signature add-on for WooCommerce here](http://www.secure.approveme.com/demo/?utm_source=wprepo&utm_medium=link&utm_campaign=woocommerce)**
 
 1. **Add New Document:** Once WP E-Signature is installed (license) you would simply create your new “Stand Alone Document.”
 2. **Add Document Details:** Creating a Stand Alone Document for WooCommerce Digital Signature is incredibly easy. You can even use the shortcode [esig-woo-order-details] to pass order details into your WordPress contract. 
@@ -224,7 +223,7 @@ Of Course. You’re welcome to ask any question you wish from our [contact form 
 12. **View Signed Document Email:** Your customers will receive an email notification with a link to the document (and a PDF of the document if you choose this option).
 13. **Save as PDF:** Your customers can also download or print their signed document from your website by clicking the link “View Signed Document” in the email they received after signing your document.
 
-**[Try WooCommerce Signature Demo Here](http://www.secure.approveme.com/demo/?utm_source=wprepo&utm_medium=link&utm_campaign=woocommerce)**
+**[Try the Digital Signature add-on for WooCommerce here](http://www.secure.approveme.com/demo/?utm_source=wprepo&utm_medium=link&utm_campaign=woocommerce)**
 
 == Changelog ==
 Version 1.8.2
