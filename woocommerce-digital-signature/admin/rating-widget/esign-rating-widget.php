@@ -45,9 +45,34 @@ if (!class_exists('esignWoocommerceRatingWidget')) :
         
         }
 
-        public function esigWoocommerceRattingWidgetRemove() {                     
-            update_option('remove_rating_widget_woocommerce','Yes');
-            die();
+        public function esigWoocommerceRattingWidgetRemove() {
+            
+            // Verify nonce for security
+            if (!check_ajax_referer('esig_woocommerce_rating_widget', 'esig_woo_rating_nonce', false)) {
+                wp_send_json_error(array('message' => __('Security check failed. Please refresh the page and try again.', 'esig-woocommerce')));
+                return;
+            }
+
+            // Check user capabilities
+            if (!current_user_can('manage_options')) {
+                wp_send_json_error(array('message' => __('You do not have permission to perform this action.', 'esig-woocommerce')));
+                return;
+            }
+
+            // Check E-Signature plugin is available
+            if (!function_exists('WP_E_Sig')) {
+                wp_send_json_error(array('message' => __('E-Signature plugin is not available.', 'esig-woocommerce')));
+                return;
+            }
+
+            // Update option with proper sanitization
+            $result = update_option('remove_rating_widget_woocommerce', 'Yes');
+            
+            if ($result) {
+                wp_send_json_success(array('message' => __('Rating widget hidden successfully.', 'esig-woocommerce')));
+            } else {
+                wp_send_json_error(array('message' => __('Failed to update settings.', 'esig-woocommerce')));
+            }
         }
         
          public function enqueueAdminStyles() {
@@ -71,6 +96,12 @@ if (!class_exists('esignWoocommerceRatingWidget')) :
             if (($current == 'toplevel_page_esign-docs')) {
               
                  wp_enqueue_script('woocommerce-rating-widget-admin-script', plugins_url('assets/js/rating-widget-control.js', __FILE__), array('jquery', 'jquery-ui-dialog'), '0.1.1', true);
+                 
+                 // Localize script with nonce for AJAX security
+                 wp_localize_script('woocommerce-rating-widget-admin-script', 'esigWooRatingAjax', array(
+                     'ajaxurl' => admin_url('admin-ajax.php'),
+                     'esig_woo_rating_nonce' => wp_create_nonce('esig_woocommerce_rating_widget')
+                 ));
             }
 
         }

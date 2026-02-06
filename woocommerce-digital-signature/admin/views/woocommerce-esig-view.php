@@ -59,12 +59,14 @@ $agreement_disabled_agreement=(isset($esign_woo_agreement_setting) && $esign_woo
 			
 			global $wpdb;
 			$db_table =   $wpdb->prefix . 'esign_documents_stand_alone_docs';
-			$stand_alone_pages = $wpdb->get_results("SELECT page_id, document_id FROM {$db_table}", OBJECT_K);
+			$stand_alone_pages = $wpdb->get_results($wpdb->prepare("SELECT page_id, document_id FROM {$db_table}"), OBJECT_K);
 			
 			foreach($stand_alone_pages as $sad_page)
 			 {
 				if($esign_woo_sad_page == $sad_page->page_id){ $selected="selected"; } else { $selected=""; }
-				echo '<option value="'. $sad_page->page_id .'" '. $selected .' > '. get_the_title($sad_page->page_id ) .' </option>';	
+				$page_id = absint($sad_page->page_id);
+				$page_title = esc_html(get_the_title($page_id));
+				echo '<option value="' . esc_attr($page_id) . '" ' . esc_attr($selected) . '>' . $page_title . '</option>';	
 			 }
 			
 			?>

@@ -554,8 +554,16 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')) :
 
                     $order = wc_get_order($result);
                     $return_url = $this->get_return_url($order);
-                    wp_redirect($return_url);
-                    exit;
+                    
+                    // Validate redirect URL to prevent open redirect attacks
+                    if (!empty($return_url)) {
+                        $return_url = wp_sanitize_redirect($return_url);
+                        $return_url = wp_validate_redirect($return_url, wc_get_checkout_url());
+                        if ($return_url) {
+                            wp_safe_redirect($return_url);
+                            exit;
+                        }
+                    }
                 }
             }
 
@@ -598,8 +606,16 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')) :
 
             $this->esig_before_checkout_form();
 
-            wp_redirect(wc_get_checkout_url());
-            exit;
+            $checkout_url = wc_get_checkout_url();
+            // Validate redirect URL to prevent open redirect attacks
+            if (!empty($checkout_url)) {
+                $checkout_url = wp_sanitize_redirect($checkout_url);
+                $checkout_url = wp_validate_redirect($checkout_url, home_url());
+                if ($checkout_url) {
+                    wp_safe_redirect($checkout_url);
+                    exit;
+                }
+            }
         }
 
         public function esig_signature_after($args) {
@@ -715,8 +731,16 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')) :
             if ($esign_woo_sad_page && get_post_status ( $esign_woo_sad_page )=="publish") {
 
                 $permalink = get_permalink($esign_woo_sad_page);
-                wp_redirect($permalink);
-                exit;
+                
+                // Validate redirect URL to prevent open redirect attacks
+                if (!empty($permalink)) {
+                    $permalink = wp_sanitize_redirect($permalink);
+                    $permalink = wp_validate_redirect($permalink, home_url());
+                    if ($permalink) {
+                        wp_safe_redirect($permalink);
+                        exit;
+                    }
+                }
             }
             return false;
         }

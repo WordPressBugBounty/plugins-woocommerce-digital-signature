@@ -2,9 +2,9 @@
 Contributors: approveme
 Tags:  WooCommerce, Electronic Signature, electronic signatures Digital Signature,  Terms of Service and Privacy Policy, e-signature, e-signatures, Sign Documents Online, sign document, e-signatures, sign contract
 Requires at least: 5.1
-Tested up to: 6.8
-Stable tag: 1.8.3
-Version: 1.8.3
+Tested up to: 6.9
+Stable tag: 1.8.4
+Version: 1.8.4
 
 Automatically require your WooCommerce customers to sign a legally binding contract before downloading your product. Easy to Use.
 
@@ -203,6 +203,11 @@ Renewing your license provides an additional year of support and software update
 
 Of Course. You’re welcome to ask any question you wish from our [contact form page](https://approveme.com/contact/?utm_source=wprepo&utm_medium=link&utm_campaign=woocommerce).
 
+= Where do I report security bugs found in this plugin? =
+
+Please report security bugs found in the source code of the undefined plugin through the [Patchstack Vulnerability Disclosure  Program](https://patchstack.com/database/vdp/8abc057a-e050-4409-9b63-87e1057185d0). The Patchstack team will assist you with verification, CVE assignment, and notify the developers of this plugin.
+
+
 **[Try the Digital Signature add-on for WooCommerce here](http://www.secure.approveme.com/demo/?utm_source=wprepo&utm_medium=link&utm_campaign=woocommerce)**
 
 == Screenshots ==
@@ -226,6 +231,19 @@ Of Course. You’re welcome to ask any question you wish from our [contact form 
 **[Try the Digital Signature add-on for WooCommerce here](http://www.secure.approveme.com/demo/?utm_source=wprepo&utm_medium=link&utm_campaign=woocommerce)**
 
 == Changelog ==
+Version 1.8.4
+ADDED: Compatibility with WooCommerce 8.9+ and WordPress 6.9.
+FIX: PHP 8.3 compatibility issues.
+FIX: WooCommerce Admin Screen rendering bug.
+ENHANCEMENT: Improved document selection UI in product edit screen.
+FIX: Some minor bugs
+
+Version 1.8.3
+ADDED: Enhanced product-level agreement selection.
+ENHANCEMENT: Optimized checkout signing redirection logic.
+FIX: Compatibility issues with WooCommerce 8.7+.
+FIX: Some minor bugs
+
 Version 1.8.2
 ADDED : New location for global agreement settings .
 FIX: Some minor bugs

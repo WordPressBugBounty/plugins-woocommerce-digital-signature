@@ -89,10 +89,35 @@
         }
         var orderId = $("#esig_woo_order_id").val();
 
-        $.post(wc_enhanced_select_params.ajax_url + "?action=esig_create_order_agreement", {esig_woo_order: orderId, esig_woo_nonce: esig_woo_params.esig_woo_order_nonce}).done(function (data) {
-            if (data == "success") {
-                $("#esig-woo-unsigned-agreement-send").addClass("already-created");
-                $("#esig-woo-unsigned-agreement-send").html("Sucessfully sent");
+        jQuery.ajax({
+            url: wc_enhanced_select_params.ajax_url,
+            type: 'POST',
+            data: {
+                action: "esig_create_order_agreement",
+                esig_woo_order: orderId,
+                esig_woo_nonce: esig_woo_params.esig_woo_order_nonce
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response && response.success) {
+                    $("#esig-woo-unsigned-agreement-send").addClass("already-created");
+                    $("#esig-woo-unsigned-agreement-send").html("Successfully sent");
+                } else {
+                    var errorMessage = response && response.data && response.data.message ? response.data.message : 'Error sending agreement. Please try again.';
+                    alert(errorMessage);
+                }
+            },
+            error: function(xhr, status, error) {
+                var errorMessage = 'Error sending agreement. Please try again.';
+                try {
+                    var jsonData = jQuery.parseJSON(xhr.responseText);
+                    if (jsonData && jsonData.data && jsonData.data.message) {
+                        errorMessage = jsonData.data.message;
+                    }
+                } catch (e) {
+                    // Use default error message
+                }
+                alert(errorMessage);
             }
         });
 

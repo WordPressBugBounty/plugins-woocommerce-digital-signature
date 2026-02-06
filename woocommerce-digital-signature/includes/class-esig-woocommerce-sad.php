@@ -31,7 +31,7 @@ class esig_woocommerce_sad {
         if (!function_exists('WP_E_Sig'))
             return;
 
-        $stand_alone_pages = $this->wpdb->get_results("SELECT page_id, document_id FROM {$this->dbtable}", OBJECT_K);
+        $stand_alone_pages = $this->wpdb->get_results($this->wpdb->prepare("SELECT page_id, document_id FROM {$this->dbtable}"), OBJECT_K);
 
         $woo_array = array();
 

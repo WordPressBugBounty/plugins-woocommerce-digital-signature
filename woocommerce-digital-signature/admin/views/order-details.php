@@ -62,8 +62,8 @@ $show_customer_details = true;
 				foreach ( $order->get_order_item_totals() as $key => $total ) {
 					?>
 					<tr>
-						<th scope="row"><?php echo $total['label']; ?></th>
-						<td><?php echo $total['value']; ?></td>
+						<th scope="row"><?php echo esc_html($total['label']); ?></th>
+						<td><?php echo wp_kses_post($total['value']); ?></td>
 					</tr>
 					<?php
 				}

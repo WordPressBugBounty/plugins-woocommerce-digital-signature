@@ -51,7 +51,10 @@ else
 			{
 			    
 				if($esign_woo_sad_page != "pleaseslc" && $esign_woo_sad_page == $sad_key){ $selected="selected"; } else { $selected=""; }
-				echo '<option value="'. $sad_key .'" '. $selected .' > '. $sad_page .' </option>';	
+				$sad_key_escaped = esc_attr($sad_key);
+				$sad_page_escaped = esc_html($sad_page);
+				$selected_escaped = esc_attr($selected);
+				echo '<option value="' . $sad_key_escaped . '" ' . $selected_escaped . '>' . $sad_page_escaped . '</option>';	
 			}
 			
 			?></select></div>

@@ -35,14 +35,46 @@ class esig_hold_payment {
 
     public function create_order_agreement() {
 
-        $nonce = esigpost('esig_woo_nonce');
-
+        // Verify nonce for security
+        $nonce = isset($_POST['esig_woo_nonce']) ? $_POST['esig_woo_nonce'] : '';
         if (!wp_verify_nonce($nonce, 'esig-woo-order')) {
-            wp_die(-1);
+            wp_send_json_error(array('message' => __('Security check failed. Please refresh the page and try again.', 'esig-woocommerce')));
+            return;
         }
 
-        $postId = esigpost('esig_woo_order');
-        $order = new WC_Order($postId);
+        // Check user capabilities
+        if (!current_user_can('edit_shop_orders')) {
+            wp_send_json_error(array('message' => __('You do not have permission to perform this action.', 'esig-woocommerce')));
+            return;
+        }
+
+        // Check E-Signature plugin is available
+        if (!function_exists('WP_E_Sig')) {
+            wp_send_json_error(array('message' => __('E-Signature plugin is not available.', 'esig-woocommerce')));
+            return;
+        }
+
+        // Check WooCommerce is available
+        if (!class_exists('WC_Order')) {
+            wp_send_json_error(array('message' => __('WooCommerce is not available.', 'esig-woocommerce')));
+            return;
+        }
+
+        // Validate and sanitize order ID
+        $postId = isset($_POST['esig_woo_order']) ? $_POST['esig_woo_order'] : '';
+        if (empty($postId) || !is_numeric($postId)) {
+            wp_send_json_error(array('message' => __('Invalid order ID provided.', 'esig-woocommerce')));
+            return;
+        }
+
+        $postId = absint($postId);
+        
+        // Verify order exists and user can access it
+        $order = wc_get_order($postId);
+        if (!$order) {
+            wp_send_json_error(array('message' => __('Order not found.', 'esig-woocommerce')));
+            return;
+        }
         $emailAddress = $order->get_billing_email();
         $firstName = $order->get_billing_first_name();
         $lastName = $order->get_billing_last_name();
@@ -51,10 +83,24 @@ class esig_hold_payment {
         $recipient = array();
 
         $docs = $order->get_meta('_esig_after_checkout_doc_list', true);
-        $contracts = json_decode($docs);
+        
+        if (empty($docs)) {
+            wp_send_json_error(array('message' => __('No agreements found for this order.', 'esig-woocommerce')));
+            return;
+        }
+        
+        $contracts = json_decode($docs, true);
+        
+        if (!is_array($contracts)) {
+            wp_send_json_error(array('message' => __('Invalid agreement data.', 'esig-woocommerce')));
+            return;
+        }
+        
         foreach ($contracts as $old_doc_id => $status) {
 
             if ($status == "no" && is_numeric($old_doc_id)) {
+                
+                $old_doc_id = absint($old_doc_id);
 
                 // check for duplicate if already created continue to next agreement. 
                 $already_created = get_post_meta($postId, "_esig-agreement-created-" . $old_doc_id, true);
@@ -64,9 +110,23 @@ class esig_hold_payment {
                 }
 
 
+                // Verify document exists
+                if (!WP_E_Sig()->document->document_exists($old_doc_id)) {
+                    continue;
+                }
+                
                 $old_doc = WP_E_Sig()->document->getDocument($old_doc_id);
+                
+                if (!$old_doc) {
+                    continue;
+                }
+                
                 // Copy the document
                 $doc_id = WP_E_Sig()->document->copy($old_doc_id);
+                
+                if (!$doc_id) {
+                    continue;
+                }
 
                 $old_doc_timezone = WP_E_Sig()->document->esig_get_document_timezone($old_doc_id);
 
@@ -131,9 +191,7 @@ class esig_hold_payment {
             }
         }
 
-        echo "success";
-
-        wp_die();
+        wp_send_json_success(array('message' => __('Agreement sent successfully.', 'esig-woocommerce')));
     }
 
     public function esig_order_meta_box() {
@@ -155,7 +213,18 @@ class esig_hold_payment {
 
         $docs = $order->get_meta('_esig_after_checkout_doc_list', true);
         
-        $contracts = json_decode($docs);
+        if (empty($docs)) {
+            printf(__('<p>There is no unsigned agreement for this order.</p>', 'esig'));
+            return;
+        }
+        
+        $contracts = json_decode($docs, true);
+        
+        if (!is_array($contracts)) {
+            printf(__('<p>There is no unsigned agreement for this order.</p>', 'esig'));
+            return;
+        }
+        
         $nodocument = true;
         $i = 0;
         foreach ($contracts as $docId => $status) {
@@ -179,7 +248,7 @@ class esig_hold_payment {
                         $i++;
                     }
                     ?>
-<p> <?php echo $this->document_title($invitationId); ?>  - <a class="" href="<?php echo $this->get_resend_url($invitationId, $postId); ?>" > <?php _e('Resend agreement','esign')?> </a></p>
+<p> <?php echo esc_html($this->document_title($invitationId)); ?>  - <a class="" href="<?php echo esc_url($this->get_resend_url($invitationId, $postId)); ?>" > <?php _e('Resend agreement','esign')?> </a></p>
                     <?php
                 } else {
                      $nodocument=false;
@@ -189,7 +258,7 @@ class esig_hold_payment {
                        
                     
                     ?>
-                    <input id="esig_woo_order_id" name="esig_woo_order_id" type="hidden" value="<?php echo $postId; ?>">
+                    <input id="esig_woo_order_id" name="esig_woo_order_id" type="hidden" value="<?php echo esc_attr($postId); ?>">
                     <button id="esig-woo-unsigned-agreement-send" class="button primary"><?php _e('Send agreement for signature','esign')?></button>
                     <?php
                      $i++;
