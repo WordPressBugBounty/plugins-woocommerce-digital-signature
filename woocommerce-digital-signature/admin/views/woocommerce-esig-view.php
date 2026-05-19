@@ -29,7 +29,7 @@ $agreement_disabled_agreement=(isset($esign_woo_agreement_setting) && $esign_woo
 ?>
 
 <div class="esign-misc-tab">
- <a class="misc_link" href="admin.php?page=esign-misc-general"><?php _e('General Option','esig') ?></a>  <?php echo $data['customizztion_more_links']; ?>
+ <a class="misc_link" href="admin.php?page=esign-misc-general"><?php _e('General Option','esig') ?></a>  <?php echo wp_kses_post($data['customizztion_more_links']); ?>
 </div>
 
 
@@ -38,7 +38,7 @@ $agreement_disabled_agreement=(isset($esign_woo_agreement_setting) && $esign_woo
 
 <p class="esign-feedback-alert"><?php _e('<strong>Get Started:</strong> This WooCommerce settings page lets you specify a <a href="admin.php?page=esign-docs&document_status=stand_alone">Stand Alone Document</a> that all WooCommerce customers are required to sign in order to complete the checkout process.  Once the document has been signed they will be redirected to the final checkout page.<br /><br />You can also attach a individual documents to individual products on the <a href="edit.php?post_type=product">product page</a>.','esig'); ?></p>
 
-<?php if (array_key_exists('message', $data)) { echo $data['message']; } ?>
+<?php if (array_key_exists('message', $data)) { echo wp_kses_post($data['message']); } ?>
 
 
  <div> <?php _e('This section lets you customize the WP E-Signature & Woocommerce Global Settings','esig') ?></div>
@@ -59,14 +59,15 @@ $agreement_disabled_agreement=(isset($esign_woo_agreement_setting) && $esign_woo
 			
 			global $wpdb;
 			$db_table =   $wpdb->prefix . 'esign_documents_stand_alone_docs';
-			$stand_alone_pages = $wpdb->get_results($wpdb->prepare("SELECT page_id, document_id FROM {$db_table}"), OBJECT_K);
+			$stand_alone_pages = $wpdb->get_results("SELECT page_id, document_id FROM {$db_table}", OBJECT_K);
 			
 			foreach($stand_alone_pages as $sad_page)
 			 {
+			    // Security: Escape option values and text to prevent XSS
+			    $escaped_page_id = esc_attr($sad_page->page_id);
+			    $escaped_page_title = esc_html(get_the_title($sad_page->page_id));
 				if($esign_woo_sad_page == $sad_page->page_id){ $selected="selected"; } else { $selected=""; }
-				$page_id = absint($sad_page->page_id);
-				$page_title = esc_html(get_the_title($page_id));
-				echo '<option value="' . esc_attr($page_id) . '" ' . esc_attr($selected) . '>' . $page_title . '</option>';	
+				echo '<option value="'. $escaped_page_id .'" '. $selected .' > '. $escaped_page_title .' </option>';	
 			 }
 			
 			?>

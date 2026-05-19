@@ -443,7 +443,9 @@ class esig_woo_logic {
         global $esig_woo_order_id;
         $esig_woo_order_id = $orderId;
 
-        $docId = WP_E_Sig()->document->copy($sadDocId);
+        $doc = WP_E_Sig()->document->copyDocument($sadDocId);
+        $docId = $doc->get('document_id');
+        
         WP_E_Sig()->meta->add($docId, "form-integration", "woo");
         
         $old_doc_timezone = WP_E_Sig()->document->esig_get_document_timezone($sadDocId);
@@ -467,7 +469,9 @@ class esig_woo_logic {
 
         $data = esig_woo_logic::orderDetails($orderId);
 
-        $newDocTitle = WP_E_View::instance()->replace_variable($old_doc->document_title, $data)  . ' - ' . $recipient['first_name'];
+        // Security: Escape recipient first_name to prevent XSS in document title
+        $escaped_first_name = esc_html($recipient['first_name']);
+        $newDocTitle = WP_E_View::instance()->replace_variable($old_doc->document_title, $data)  . ' - ' . $escaped_first_name;
 
         // Update the doc title
         WP_E_Sig()->document->updateTitle($docId, $newDocTitle);

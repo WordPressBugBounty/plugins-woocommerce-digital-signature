@@ -57,7 +57,7 @@ if (!class_exists('ESIG_WOOCOMMERCE_Shortcode')) :
 
         final function esignature_content($docContent, $docId) {
 
-
+          
             $order_id = esig_woo_logic::get_after_checkout_order_id();
            
             if (!$order_id) {

@@ -8,14 +8,15 @@ if (!defined('ABSPATH')) {
     exit; // Exit if accessed directly
 }
 
-if (!class_exists('ESIG_WOOCOMMERCE_Admin')) :
+if (!class_exists('ESIG_WOOCOMMERCE_Admin')):
 
-    class ESIG_WOOCOMMERCE_Admin {
+    class ESIG_WOOCOMMERCE_Admin
+    {
 
         protected static $instance = null;
         private $plugin_slug = null;
         private $esig_sad = null;
-        
+
 
         const PRODUCT_AGREEMENT = 'esig_product_agreement';
         const GLOBAL_AGREEMENT = 'esig_global_agreement';
@@ -26,7 +27,8 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')) :
          * settings page and menu.
          * @since     0.1
          */
-        private function __construct() {
+        private function __construct()
+        {
 
             /*
              * Call $plugin_slug from public plugin class.
@@ -51,27 +53,37 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')) :
             add_filter("esig_access_control_allow", array($this, "is_esig_wocommerce_agreement"), 10, 2);
         }
 
-        public function woo_init() {
+        public function woo_init()
+        {
 
             add_action('template_redirect', array($this, 'before_block_checkout'), -1);
             add_action('woocommerce_before_checkout_form', array($this, 'esig_before_checkout_form'), 10);
 
             add_action('template_redirect', array($this, 'order_received'), -1);
-           // add_action('woocommerce_before_checkout_form', array($this, 'esig_before_checkout_form'), 10);
+            // add_action('woocommerce_before_checkout_form', array($this, 'esig_before_checkout_form'), 10);
 
             add_action('kco_wc_before_checkout_form', array($this, 'esig_before_checkout_form'), 10);
             add_action('woocommerce_checkout_before_customer_details', array($this, 'esig_before_checkout_form'), 10);
 
-            add_action('woocommerce_blocks_checkout_order_processed', array($this, 'block_order_process'), 100, 1);
+           // add_action('woocommerce_store_api_checkout_order_processed', array($this, 'block_order_process'), 100, 1);
+         /*  add_action('woocommerce_order_status_processing', array($this,'payment_status'), 10, 3);
+            add_action('woocommerce_order_status_on-hold', array($this,'payment_status'), 10, 3);
+             add_action('woocommerce_order_status_completed', array($this,'payment_status'), 10, 3); */
+             add_action('woocommerce_order_status_changed', array($this, 'payment_status'), 10, 4);
+          //  add_action('woocommerce_checkout_order_processed', array($this, 'esig_after_order_status'), 100, 1);
 
-            add_action('woocommerce_checkout_order_processed', array($this, 'esig_after_checkout_form'), 100, 3);
-           // add_action('woocommerce_thankyou', array($this, 'esig_checkout_after'), 100, 1);
+          //  add_action('woocommerce_checkout_order_processed', array($this, 'esig_after_checkout_form'), 100, 3);
+             // add_action('woocommerce_checkout_order_on-hold', array($this, 'esig_after_order_status'), 100, 1);
+              // add_action('woocommerce_checkout_order_processing', array($this, 'esig_after_order_status'), 100, 1);
+              //  add_action('woocommerce_checkout_order_completed', array($this, 'esig_after_order_status'), 100, 1);
+
+            // add_action('woocommerce_thankyou', array($this, 'esig_checkout_after'), 100, 1);
 
             $after_checkout_logic = esig_woo_logic::get_after_checkout_condition();
             add_action('woocommerce_order_status_pending_to_' . $after_checkout_logic, array($this, 'esig_new_woo_order'), 100);
 
-            add_action('esig_document_before_closing', array($this, 'esig_signature_after'), 10, 1);
-            add_action('esig_document_basic_closing', array($this, 'esig_signature_after'), 10, 1);
+            add_action('esig_document_pre_close', array($this, 'esig_signature_after'), 10, 1);
+            //  add_action('esig_document_basic_closing', array($this, 'esig_signature_after'), 10, 1);
             add_action('esig_after_sad_process_done', array($this, 'signature_process_done'), 11, 1);
             add_action('esig_approval_signer_added', array($this, 'signature_process_done'), 11, 1);
             add_action('esig_signature_loaded', array($this, 'signature_process_done'), 99999, 1);
@@ -115,38 +127,63 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')) :
          * @since 2022
          * @access public
          */
-        public function order_received() {
+        public function order_received()
+        {
 
-           
+
             // get current page id
-            if(!esig_woo_logic::isCheckoutPage()){
-                
+            if (!esig_woo_logic::isCheckoutPage()) {
+
                 return false;
             }
-           
-            $orderRecieved = get_option( 'woocommerce_checkout_order_received_endpoint' );
-            if(!is_wc_endpoint_url($orderRecieved)){
-               return false;
+
+            $orderRecieved = get_option('woocommerce_checkout_order_received_endpoint');
+            if (!is_wc_endpoint_url($orderRecieved)) {
+                return false;
             }
-            
+
             $key = isset($_GET['key']) ? sanitize_text_field($_GET['key']) : null;
-            if(empty($key)){
+            if (empty($key)) {
                 return false;
             }
-           
+
             // get key if set and sanitize it 
             // get order id by key
             $order_id = wc_get_order_id_by_order_key($key);
 
-            if(!$order_id){
-               
+            if (!$order_id) {
+
                 return false;
             }
-           
+
             //  run check after 
             $this->esig_checkout_after($order_id);
 
 
+        }
+
+        public function payment_status($order_id, $old_status, $new_status, $order)
+        {
+            $esigStatusCondition  = esig_woo_logic::get_after_checkout_condition();
+
+            if (!$order_id || !$order) {
+                return false;
+            }
+
+            if( $esigStatusCondition == "always") {
+                $this->esig_after_order_status($order_id);
+                return;
+            }
+
+            //$status = $order->get_status();
+            if( $new_status == $esigStatusCondition)
+            {
+                $this->esig_after_order_status($order_id);
+            }
+
+            return;
+           
+            
         }
 
         /**
@@ -155,17 +192,20 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')) :
          * @param int $order_id The ID of the order to block the process for.
          * @return void
          */
-        public function block_order_process($order) {
+        public function block_order_process($order)
+        {
             // check order id is object 
             if (!is_object($order)) {
                 return;
             }
             $order_id = $order->get_id();
-           
-            $this->esig_after_checkout_form($order_id, null, $order);
+
+           // $this->esig_after_checkout_form($order_id, null, $order);
+           $this->esig_after_order_status($order_id);
         }
 
-        public function is_esig_wocommerce_agreement($ret, $document_id) {
+        public function is_esig_wocommerce_agreement($ret, $document_id)
+        {
 
             global $wpdb;
             $table = $table = _get_meta_table('post');
@@ -190,7 +230,8 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')) :
             return $ret;
         }
 
-        public function invite_not_sent($ret, $document_id) {
+        public function invite_not_sent($ret, $document_id)
+        {
             $docCheckSum = WP_E_Sig()->meta->get($document_id, 'esig-woo-document-checksum');
             $inviteHash = WP_E_Sig()->meta->get($document_id, 'esig-woo-invite-hash');
             if (empty($docCheckSum) && empty($inviteHash)) {
@@ -200,29 +241,27 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')) :
             }
         }
 
-        public function woo_add_to_cart($cart_item_data, $cart_item_key) {
-            
-       
-            if (esig_woo_logic::is_signature_required($cart_item_data['product_id']))
-             {
-                 $productAgreementId  = esig_woo_logic::get_agreement_id($cart_item_data['product_id']);
-                
-                 if($productAgreementId && $productAgreementId != "pleaseslc")
-                 {
+        public function woo_add_to_cart($cart_item_data, $cart_item_key)
+        {
+
+
+            if (esig_woo_logic::is_signature_required($cart_item_data['product_id'])) {
+                $productAgreementId = esig_woo_logic::get_agreement_id($cart_item_data['product_id']);
+
+                if ($productAgreementId && $productAgreementId != "pleaseslc") {
                     $cart_item_data[self::PRODUCT_AGREEMENT]['agreement_id'] = $productAgreementId;
                     $cart_item_data[self::PRODUCT_AGREEMENT]['agreement_logic'] = esig_woo_logic::get_agreement_logic($cart_item_data['product_id']);
                     $cart_item_data[self::PRODUCT_AGREEMENT]['signed'] = 'no';
-                 }
-                
+                }
+
             }
 
             // check if global agreement enabled 
             if (esig_woo_logic::is_global_agreement_enabled()) {
 
-                $sadArray  = esig_woo_logic::set_global_agreement();
+                $sadArray = esig_woo_logic::set_global_agreement();
                 // check for is array  . 
-                if(is_array($sadArray))
-                {
+                if (is_array($sadArray)) {
                     $cart_item_data[self::GLOBAL_AGREEMENT] = $sadArray;
                 }
 
@@ -233,11 +272,92 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')) :
             return $cart_item_data;
         }
 
-         public function esig_after_checkout_form($order_id, $posted_data, $order) {
+        /**
+         *  New method added to handle after checkout logic with order status 
+         *  @since 1.8.1
+         *  @param mixed $order_id
+         */
+
+      public  function esig_after_order_status($order_id)
+        {
+            $order = wc_get_order($order_id);
+
+             $status = $order->get_status();
+
+             update_option("rupom", $status);
+
+            $agreement_list = array();
+
+           
+
+            // Check if renewal contract is allowed
+            if (!esig_woo_logic::renewalContractAllowed() && esig_woo_logic::isRenewal()) {
+                return false;
+            }
+
+            // Loop through order items
+            foreach ($order->get_items() as $item_id => $order_item) {
+
+                $product_id = $order_item->get_product_id();
+
+                // Skip subscription renewals if not allowed
+                if (!esig_woo_logic::renewalContractAllowed() && isset($order_item['subscription_renewal'])) {
+                    continue;
+                }
+
+                // Get e-sign agreement data from item meta
+                $esig_agreement = $order_item->get_meta('PRODUCT_AGREEMENT', true) ?: array();
+                $agreement_logic = $esig_agreement['agreement_logic'] ?? null;
+                $agreement_signed = $esig_agreement['signed'] ?? null;
+
+                // If bypass, check if signature is required
+                if (empty($agreement_logic) && empty($agreement_signed) && esig_woo_logic::is_signature_required($product_id)) {
+                    $agreement_logic = esig_woo_logic::get_agreement_logic($product_id);
+                    $agreement_signed = 'no';
+                    $esig_agreement['agreement_id'] = esig_woo_logic::get_agreement_id($product_id);
+                }
+
+                // Process agreements set to 'after_checkout' and not signed
+                if ($agreement_logic === 'after_checkout' && $agreement_signed === 'no') {
+                    $agreement_id = esig_woo_logic::clone_document($esig_agreement['agreement_id'], $order_id);
+                    if ($agreement_id) {
+                        $agreement_list[$agreement_id] = 'no';
+                    }
+                }
+            }
+
+            // Handle global document
+            $global_document_id = esig_woo_logic::get_global_doc_id_from_session('after_checkout');
+            if ($global_document_id) {
+                $agreement_id = esig_woo_logic::clone_document($global_document_id, $order_id);
+                if ($agreement_id) {
+                    $agreement_list[$agreement_id] = 'no';
+                }
+            }
+
+            // Support YITH Request a Quote plugin
+            if (empty($agreement_list) && class_exists('YITH_Request_Quote')) {
+                update_post_meta($order_id, 'woo_esig_agreement', 'no');
+            }
+
+            // Save the processed agreements
+            esig_woo_logic::save_after_checkout_doc_list($order_id, $agreement_list);
+        }
+
+        /**
+         * Summary of esig_after_checkout_form
+         * @deprecated  1.8.0
+         * @param mixed $order_id
+         * @param mixed $posted_data
+         * @param mixed $order
+         * @return bool
+         */
+        public function esig_after_checkout_form($order_id, $posted_data, $order)
+        {
 
             $agreement_list = array();
             // check for renewal agreement allowed or not if not allowed abort if allowed proceed. 
-            
+
             // if (sizeof($woocommerce->cart->cart_contents) > 0) {
             //$cart = WC()->session->get('cart', null);
 
@@ -245,29 +365,29 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')) :
                 if (WC()->cart->get_cart_contents_count() > 0) {
 
                     foreach (WC()->cart->get_cart() as $cart_item) {
-                        
-                        $productId = esig_woocommerce_get("product_id",$cart_item);
+
+                        $productId = esig_woocommerce_get("product_id", $cart_item);
 
                         if (!esig_woo_logic::renewalContractAllowed()) {
                             if (is_array($cart_item) && array_key_exists("subscription_renewal", $cart_item)) {
                                 break;
                             }
                         }
-                       
+
                         $esig_agreement = isset($cart_item[self::PRODUCT_AGREEMENT]) ? $cart_item[self::PRODUCT_AGREEMENT] : null;
                         $agreement_logic = isset($esig_agreement['agreement_logic']) ? $esig_agreement['agreement_logic'] : null;
                         $agreement_signed = isset($esig_agreement['signed']) ? $esig_agreement['signed'] : null;
-                        
+
                         // if bypass add to cart and product direclty added to cart
-                        if(empty($agreement_logic) && empty($agreement_signed)){
-                             if(esig_woo_logic::is_signature_required($product_id)){
-                                 $agreement_logic = esig_woo_logic::get_agreement_logic($product_id);
-                                 $agreement_signed ="no";
-                                 $sad_document_id = esig_woo_logic::get_agreement_id($productId);
-                                 $esig_agreement["agreement_id"] = $sad_document_id; 
-                             }
+                        if (empty($agreement_logic) && empty($agreement_signed)) {
+                            if (esig_woo_logic::is_signature_required($productId)) {
+                                $agreement_logic = esig_woo_logic::get_agreement_logic($productId);
+                                $agreement_signed = "no";
+                                $sad_document_id = esig_woo_logic::get_agreement_id($productId);
+                                $esig_agreement["agreement_id"] = $sad_document_id;
+                            }
                         }
-                        
+
                         if ($agreement_logic == 'after_checkout' && $agreement_signed == 'no') {
                             $agreement_id = esig_woo_logic::clone_document($esig_agreement['agreement_id'], $order_id);
                             if ($agreement_id) {
@@ -277,13 +397,13 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')) :
                     }
                 }
             }
-            
+
             // global agreement 
             $global_document_id = esig_woo_logic::get_global_doc_id_from_session('after_checkout');
 
             //adding YITH WooCommerce Request A Quote Premium plugin support 
             /* if(empty($global_document_id) && class_exists('YITH_Request_Quote')){
-                
+
                     $global_esig_logic = esig_woo_logic::get_global_logic(); 
                     if(esig_woo_logic::is_global_agreement_enabled() && $global_esig_logic=="after_checkout"){
                         update_post_meta($order_id,'have_esig_agreement',esig_woo_logic::get_global_agreement_id()); 
@@ -291,8 +411,9 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')) :
                     }
             }*/
             if (!esig_woo_logic::renewalContractAllowed()) {
-                 
-                if(esig_woo_logic::isRenewal()) return false;
+
+                if (esig_woo_logic::isRenewal())
+                    return false;
             }
 
             if ($global_document_id) {
@@ -302,15 +423,16 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')) :
                 }
             }
 
-            if(empty($agreement_list) && class_exists('YITH_Request_Quote')){
-                        update_post_meta($order_id,'woo_esig_agreement','no');        
+            if (empty($agreement_list) && class_exists('YITH_Request_Quote')) {
+                update_post_meta($order_id, 'woo_esig_agreement', 'no');
             }
-            
+
             esig_woo_logic::save_after_checkout_doc_list($order_id, $agreement_list);
-            
+
         }
 
-        public function get_return_url($order = null) {
+        public function get_return_url($order = null)
+        {
 
             if ($order) {
                 $return_url = $order->get_checkout_order_received_url();
@@ -325,32 +447,32 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')) :
             return apply_filters('woocommerce_get_return_url', $return_url, $order);
         }
 
-        public function esig_checkout_after($order_id) {
-            
-           
-            if(!function_exists("WP_E_Sig"))
-            {
+        public function esig_checkout_after($order_id)
+        {
+
+
+            if (!function_exists("WP_E_Sig")) {
                 return false;
             }
-            
+
             if (!esig_woo_logic::is_after_checkout_enable($order_id)) {
                 return false;
             }
 
-           
+
             esig_woo_logic::save_after_checkout_order_id($order_id);
-            
-            $noWooAgreement  = get_post_meta($order_id, 'woo_esig_agreement', true);
-            
+
+            $noWooAgreement = get_post_meta($order_id, 'woo_esig_agreement', true);
+
             // Logic for YITH WooCommerce Request A Quote Premium
-            if($noWooAgreement=="no" && class_exists('YITH_Request_Quote')){
-               
-                esig_woo_logic::yith_quote_agreement($order_id,'after_checkout');
+            if ($noWooAgreement == "no" && class_exists('YITH_Request_Quote')) {
+
+                esig_woo_logic::yith_quote_agreement($order_id, 'after_checkout');
             }
 
             $doc_list = esig_woo_logic::get_after_checkout_doc_list($order_id);
-            
-           
+
+
             $sad_page = false;
             foreach ($doc_list as $document_id => $value) {
                 if ($value == "no") {
@@ -367,6 +489,15 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')) :
 
             if ($sad_page) {
 
+                if (esig_ajax_request()) {
+
+                    wp_send_json_success(array(
+                        'redirect' => $sad_page,
+                        'message' => __('Document signed successfully.', 'esig'),
+                        'success' => true,
+                    ));
+                    exit;
+                }
                 //$permalink = get_permalink($sad_page);
                 wp_safe_redirect($sad_page);
                 exit;
@@ -385,22 +516,24 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')) :
          *
          * @return    null    Return early if no settings page is registered.
          */
-        public function enqueue_admin_styles() {
+        public function enqueue_admin_styles()
+        {
 
             $screen = get_current_screen();
             $admin_screens = array(
                 'dashboard_page_esign-woocommerce-about',
                 'woocommerce_page_wc-settings',
                 'e-signature_page_esign-woo',
-                'e-signature_page_esign-woocommerce'
+                'e-signature_page_esign-woocommerce',
             );
 
-            if (in_array(esig_woocommerce_get("id",$screen), $admin_screens)) {
+            if (in_array(esig_woocommerce_get("id", $screen), $admin_screens)) {
                 wp_enqueue_style($this->plugin_slug . '-admin-styles', plugins_url('assets/css/esign-woocommerce.css', __FILE__), array());
             }
         }
 
-        public function esignature_all_settings($settings_esignature) {
+        public function esignature_all_settings($settings_esignature)
+        {
             /**
              * Check the current section is what we want
              * */
@@ -424,16 +557,15 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')) :
 
 
             // checking for a subscription to display this option  
-            if (esig_woo_logic::subscriptionPluginExists()) 
-            {
-                    $settings_esignature[] = array(
-                        'name' => '',
-                        'desc_tip' => __('This will automatically enable E-signature agreement it only works on WooCommerce subscription plugin.', 'esig'),
-                        'id' => 'esign_woo_agreement_in_product_renewal',
-                        'type' => 'checkbox',
-                        'css' => 'min-width:300px;padding:0px !important;',
-                        'desc' => __('Enable agreement in product renewal', 'esig'),
-                    );
+            if (esig_woo_logic::subscriptionPluginExists()) {
+                $settings_esignature[] = array(
+                    'name' => '',
+                    'desc_tip' => __('This will automatically enable E-signature agreement it only works on WooCommerce subscription plugin.', 'esig'),
+                    'id' => 'esign_woo_agreement_in_product_renewal',
+                    'type' => 'checkbox',
+                    'css' => 'min-width:300px;padding:0px !important;',
+                    'desc' => __('Enable agreement in product renewal', 'esig'),
+                );
             }
 
             // adding action dropdown 
@@ -469,16 +601,18 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')) :
             return $settings_esignature;
         }
 
-        public function signing_logic() {
+        public function signing_logic()
+        {
             return array(
                 "before_checkout" => "Redirect user to sign before checkout",
                 "after_checkout" => "Redirect user to esign after checkout",
             );
         }
 
-        public function condition_logic() {
+        public function condition_logic()
+        {
             return array(
-                "completed" => "When order status completed",
+                 "always" => "Always trigger (regardless of status)",
                 "on-hold" => "When order status on-hold",
                 "processing" => "When order status processing"
             );
@@ -487,13 +621,15 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')) :
         /**
          * Create the section beneath the products tab
          * */
-        public function esignature_add_section($sections) {
+        public function esignature_add_section($sections)
+        {
 
             $sections['wpesignature'] = __('WP E-signature', 'esig');
             return $sections;
         }
 
-        public function esig_woo_cart_empty() {
+        public function esig_woo_cart_empty()
+        {
 
             if (!function_exists('WP_E_Sig')) {
                 return;
@@ -503,7 +639,8 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')) :
             WC()->session->set(self::TEMP_ORDER_ID, NULL);
         }
 
-        public function esig_new_woo_order($order_id) {
+        public function esig_new_woo_order($order_id)
+        {
             global $woocommerce;
             // order id temporary 
             $order_id = esig_woo_logic::orderIdValid($order_id);
@@ -530,19 +667,23 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')) :
             //$this->esig_after_checkout_form($order_id);
         }
 
-        public function signature_process_done($args) {
+        public function signature_process_done($args)
+        {
 
             $docId = esig_woocommerce_sanitize_init(esig_woocommerce_get("document_id", $args));
             $sad_doc_id = esig_woocommerce_sanitize_init(esig_woocommerce_get("sad_doc_id", $args));
-            
-            WP_E_Sig()->meta->add($docId, 'esig_woocommerce_ratting_doc_id',  $docId);
+
+
+            WP_E_Sig()->meta->add($docId, 'esig_woocommerce_ratting_doc_id', $docId);
 
             if (esig_woo_logic::get_after_checkout_order_id()) {
+
 
                 $order_id = esig_woo_logic::get_after_checkout_order_id();
                 $afterCheckoutDocList = esig_woo_logic::get_after_checkout_doc_list($order_id);
 
-                if(!is_array($afterCheckoutDocList)) return false;
+                if (!is_array($afterCheckoutDocList))
+                    return false;
 
                 if (!array_key_exists($sad_doc_id, $afterCheckoutDocList)) {
                     return false;
@@ -554,16 +695,14 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')) :
 
                     $order = wc_get_order($result);
                     $return_url = $this->get_return_url($order);
-                    
-                    // Validate redirect URL to prevent open redirect attacks
-                    if (!empty($return_url)) {
-                        $return_url = wp_sanitize_redirect($return_url);
-                        $return_url = wp_validate_redirect($return_url, wc_get_checkout_url());
-                        if ($return_url) {
-                            wp_safe_redirect($return_url);
-                            exit;
-                        }
-                    }
+                    wp_send_json_success(array(
+                        'redirect' => $return_url,
+                        'message' => __('Document signed successfully.', 'esig'),
+                        'success' => true,
+                        'document_id' => $docId,
+                    ));
+
+                    exit;
                 }
             }
 
@@ -604,35 +743,41 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')) :
                 return false;
             }
 
+
             $this->esig_before_checkout_form();
 
-            $checkout_url = wc_get_checkout_url();
-            // Validate redirect URL to prevent open redirect attacks
-            if (!empty($checkout_url)) {
-                $checkout_url = wp_sanitize_redirect($checkout_url);
-                $checkout_url = wp_validate_redirect($checkout_url, home_url());
-                if ($checkout_url) {
-                    wp_safe_redirect($checkout_url);
-                    exit;
-                }
-            }
+            $redirection = wc_get_checkout_url();
+
+            // send json response to the form integration
+            wp_send_json_success(array(
+                'redirect' => $redirection,
+                'message' => __('Document signed successfully.', 'esig'),
+                'success' => true,
+                'document_id' => $docId,
+            ));
+            exit;
+
         }
 
-        public function esig_signature_after($args) {
+        public function esig_signature_after($args)
+        {
 
             if (!function_exists('WP_E_Sig')) {
                 return;
             }
 
-            $document_id = $args['invitation']->document_id;
+            $invitation = esigget("invitation", $args);
 
-            $sad_doc_id = $args['sad_doc_id'];
+            $document_id = $invitation->get("document_id");
+
+            $sad_doc_id = esigget("sad_doc_id", $args);
 
             if (esig_woo_logic::get_after_checkout_order_id()) {
                 $order_id = esig_woo_logic::get_after_checkout_order_id();
                 $afterCheckoutDocList = esig_woo_logic::get_after_checkout_doc_list($order_id);
-                
-                if(!is_array($afterCheckoutDocList)) return false;
+
+                if (!is_array($afterCheckoutDocList))
+                    return false;
 
                 if (!array_key_exists($sad_doc_id, $afterCheckoutDocList)) {
                     return false;
@@ -661,7 +806,7 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')) :
                         if ($sad_doc_id == $esig_agreement['agreement_id']) {
                             $productAgreement = true;
                             esig_woo_logic::make_agreement_signed($cart_item_key, $document_id);
-                          
+
                         }
                     }
                 }
@@ -689,7 +834,8 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')) :
               exit; */
         }
 
-        public function after_checkout_signed_update($order_id, $sad_doc_id, $document_id) {
+        public function after_checkout_signed_update($order_id, $sad_doc_id, $document_id)
+        {
 
 
 
@@ -701,7 +847,8 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')) :
               } */
         }
 
-        public function esig_misc_page_more_acitons($misc_more_actions) {
+        public function esig_misc_page_more_acitons($misc_more_actions)
+        {
 
             $class = (isset($_GET['page']) && esig_woocommerce_get('page') == 'esign-woocommerce') ? 'misc_current' : '';
             $misc_more_actions .= ' | <a class="misc_link ' . $class . '" href="admin.php?page=wc-settings&tab=checkout">' . __('WooCommerce', 'esig') . '</a>';
@@ -714,33 +861,26 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')) :
          * @Since 1.1.3
          */
 
-        public function esig_before_checkout_form() {
+        public function esig_before_checkout_form()
+        {
 
             if (!function_exists('WP_E_Sig')) {
                 return;
             }
 
-            if(!is_checkout()){
+            if (!is_checkout()) {
                 return false;
             }
 
             $agreement_id = $this->is_signature_needs('before_checkout');
 
             $esign_woo_sad_page = esig_woo_logic::get_sad_page_id($agreement_id);
-           
-            if ($esign_woo_sad_page && get_post_status ( $esign_woo_sad_page )=="publish") {
+
+            if ($esign_woo_sad_page && get_post_status($esign_woo_sad_page) == "publish") {
 
                 $permalink = get_permalink($esign_woo_sad_page);
-                
-                // Validate redirect URL to prevent open redirect attacks
-                if (!empty($permalink)) {
-                    $permalink = wp_sanitize_redirect($permalink);
-                    $permalink = wp_validate_redirect($permalink, home_url());
-                    if ($permalink) {
-                        wp_safe_redirect($permalink);
-                        exit;
-                    }
-                }
+                wp_redirect($permalink);
+                exit;
             }
             return false;
         }
@@ -750,58 +890,60 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')) :
          * 
          * */
 
-        public function is_signature_needs($is_true) {
+        public function is_signature_needs($is_true)
+        {
 
             global $woocommerce;
 
             $sad_document_id = false;
 
-           
+
 
             foreach ($woocommerce->cart->get_cart() as $cart_item_key => $cart_item) {
 
-               
+
                 // check for renewal agreement allowed or not if not allowed abort if allowed proceed. 
                 if (!esig_woo_logic::renewalContractAllowed()) {
-                    
+
                     if (is_array($cart_item) && array_key_exists("subscription_renewal", $cart_item)) {
                         break;
                     }
                 }
 
                 $esig_agreement = isset($cart_item[self::PRODUCT_AGREEMENT]) ? $cart_item[self::PRODUCT_AGREEMENT] : null;
+
                 $agreement_logic = isset($esig_agreement['agreement_logic']) ? $esig_agreement['agreement_logic'] : null;
                 $agreement_signed = isset($esig_agreement['signed']) ? $esig_agreement['signed'] : null;
                 if ($agreement_logic == $is_true && $agreement_signed == 'no') {
 
                     $sad_document_id = $esig_agreement['agreement_id'];
                     break;
-                } 
-                
-                $productId = esig_woocommerce_get("product_id",$cart_item);
-                if(esig_woo_logic::is_signature_required($productId)){
-                     $agreementLogic = esig_woo_logic::get_agreement_logic($productId);
-                     if($agreementLogic == "before_checkout"){
-                          
-                         
-                          if($agreement_signed=="yes"){
-                              continue;
-                          }
-                          $sad_document_id = esig_woo_logic::get_agreement_id($productId);
-                          
-                          if($sad_document_id){ 
-                             
-                              WC()->cart->cart_contents[$cart_item_key][self::PRODUCT_AGREEMENT]['signed'] = 'no';
-                              WC()->cart->cart_contents[$cart_item_key][self::PRODUCT_AGREEMENT]['agreement_id'] = $sad_document_id;
-                              WC()->cart->cart_contents[$cart_item_key][self::PRODUCT_AGREEMENT]['agreement_logic'] = "before_checkout";
-                              WC()->cart->set_session();
-                               break; 
-                              
-                          }
-                     }
                 }
-                
-               
+
+                $productId = esig_woocommerce_get("product_id", $cart_item);
+                if (esig_woo_logic::is_signature_required($productId)) {
+                    $agreementLogic = esig_woo_logic::get_agreement_logic($productId);
+                    if ($agreementLogic == "before_checkout") {
+
+
+                        if ($agreement_signed == "yes") {
+                            continue;
+                        }
+                        $sad_document_id = esig_woo_logic::get_agreement_id($productId);
+
+                        if ($sad_document_id) {
+
+                            WC()->cart->cart_contents[$cart_item_key][self::PRODUCT_AGREEMENT]['signed'] = 'no';
+                            WC()->cart->cart_contents[$cart_item_key][self::PRODUCT_AGREEMENT]['agreement_id'] = $sad_document_id;
+                            WC()->cart->cart_contents[$cart_item_key][self::PRODUCT_AGREEMENT]['agreement_logic'] = "before_checkout";
+                            WC()->cart->set_session();
+                            break;
+
+                        }
+                    }
+                }
+
+
             }
             // if sad page is true then return 
 
@@ -822,7 +964,8 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')) :
          * @since     0.1
          * @return    object    A single instance of this class.
          */
-        public static function get_instance() {
+        public static function get_instance()
+        {
             // If the single instance hasn't been set, set it now.
             if (null == self::$instance) {
                 self::$instance = new self;
@@ -833,51 +976,51 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')) :
 
     }
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 endif;
 

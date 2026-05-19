@@ -49,12 +49,11 @@ else
 			
 			foreach($stand_alone_pages as $sad_key => $sad_page)
 			{
-			    
+			    // Security: Escape option values and text to prevent XSS
+			    $escaped_sad_key = esc_attr($sad_key);
+			    $escaped_sad_page = esc_html($sad_page);
 				if($esign_woo_sad_page != "pleaseslc" && $esign_woo_sad_page == $sad_key){ $selected="selected"; } else { $selected=""; }
-				$sad_key_escaped = esc_attr($sad_key);
-				$sad_page_escaped = esc_html($sad_page);
-				$selected_escaped = esc_attr($selected);
-				echo '<option value="' . $sad_key_escaped . '" ' . $selected_escaped . '>' . $sad_page_escaped . '</option>';	
+				echo '<option value="'. $escaped_sad_key .'" '. $selected .' > '. $escaped_sad_page .' </option>';	
 			}
 			
 			?></select></div>

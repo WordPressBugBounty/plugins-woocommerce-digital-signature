@@ -179,7 +179,8 @@ if (!class_exists('ESIG_WOOCOMMERCE')) :
             }
 
 
-            echo $msg;
+            // Security: Escape message output to prevent XSS
+            echo wp_kses_post($msg);
         }
 
         /**

@@ -29,7 +29,8 @@ class esigWooData {
             'admin_page_esign-edit-document',
             'product',
             'woocommerce_page_wc-settings',
-            'shop_order'
+            'shop_order',
+             'e-signature_page_esign-setup',
         );
 
         // Add/Edit Document scripts
@@ -49,19 +50,9 @@ class esigWooData {
 
     public function add_sif_gravity_buttons($sif_menu) {
 
-        $esig_type = ESIG_GET('esig_type');
-        $document_id = ESIG_GET('document_id');
-        if (empty($esig_type) && !empty($document_id)) {
-            $document_type = WP_E_Sig()->document->getDocumenttype($document_id);
-            if ($document_type == "stand_alone") {
-                $esig_type = "sad";
-            }
-        }
-        if ($esig_type != 'sad') {
-            return $sif_menu;
-        }
+        $sif_menu .= '<a class="dropdown-item bridge-plugin-integration" id="wpesign__woocommerce-sif-popup" href="#">Insert Woo Details</a>';
         // $plugins['esig_sif'] = plugin_dir_url(__FILE__) . 'assets/js/esig-gravity-sif-buttons.js';
-        $sif_menu .= '{text: "Insert Woo Details",value: "woocommerce",onclick: function () {  tb_show( "+ Insert Woo Details", "#TB_inline?width=500&height=300&inlineId=esig-woocommerce-option");esign.tbSize(450);}},';
+       
 
         return $sif_menu;
     }
@@ -113,8 +104,10 @@ class esigWooData {
         $tags = $this->wooTag();
 
         foreach ($tags as $value => $label) {
-
-            $more_option_page .= '<option value="' . $value . '">' . $label . '</option>';
+            // Security: Escape option values and text to prevent XSS
+            $escaped_value = esc_attr($value);
+            $escaped_label = esc_html($label);
+            $more_option_page .= '<option value="' . $escaped_value . '">' . $escaped_label . '</option>';
         }
 
         $more_option_page .= '</select>
