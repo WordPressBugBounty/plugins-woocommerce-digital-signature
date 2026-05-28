@@ -2,9 +2,9 @@
 Contributors: approveme
 Tags:  WooCommerce, Electronic Signature, electronic signatures Digital Signature,  Terms of Service and Privacy Policy, e-signature, e-signatures, Sign Documents Online, sign document, e-signatures, sign contract
 Requires at least: 5.1
-Tested up to: 6.9
-Stable tag: 2.0
-Version: 2.0
+Tested up to: 7.0
+Stable tag: 2.0.1
+Version: 2.0.1
 
 Automatically require your WooCommerce customers to sign a legally binding contract before downloading your product. Easy to Use.
 
@@ -204,6 +204,11 @@ Renewing your license provides an additional year of support and software update
 
 Of Course. You’re welcome to ask any question you wish from our [contact form page](https://approveme.com/contact/?utm_source=wprepo&utm_medium=link&utm_campaign=woocommerce).
 
+
+= Where do I report security bugs found in this plugin? =
+
+Please report security bugs found in the source code of the Signature Add-On for WooCommerce plugin through the [Patchstack Vulnerability Disclosure  Program](https://patchstack.com/database/vdp/8abc057a-e050-4409-9b63-87e1057185d0). The Patchstack team will assist you with verification, CVE assignment, and notify the developers of this plugin.
+
 **[Try WooCommerce Signature Demo Here](http://www.secure.approveme.com/demo/?utm_source=wprepo&utm_medium=link&utm_campaign=woocommerce)**
 
 == Screenshots ==
@@ -227,7 +232,13 @@ Of Course. You’re welcome to ask any question you wish from our [contact form 
 **[Try WooCommerce Signature Demo Here](http://www.secure.approveme.com/demo/?utm_source=wprepo&utm_medium=link&utm_campaign=woocommerce)**
 
 == Changelog ==
-Version 2.0 
+Version 2.0.1
+SECURITY: Moved session data from client cookies to server-side WooCommerce sessions..
+FIX: Document redirection issue . 
+FIX: Some minor issue
+
+
+Version 2.0
 ADDED: Compatibility release aligned with WP E-Signature 2.0.
 
 Version 1.8.4

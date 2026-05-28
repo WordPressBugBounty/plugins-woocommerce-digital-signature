@@ -254,21 +254,8 @@ class esig_hold_payment {
         return false;
     }
 
-    public function pre_process_checkout() {
-
-
-        $response = array(
-            'result' => 'failure',
-            'messages' => '<font color="color">'. __('here we go','esign').'</font>',
-        );
-
-        update_option('rupom', WC()->session);
-        wp_send_json($response);
-        wp_die();
-
-        //wp_redirect( wc_get_page_permalink( 'cart' ) );
-        //exit;
-        // throw new Exception( __( 'This is test', 'woocommerce' ) );
-    }
+    // pre_process_checkout() was removed — it was dead code (never hooked)
+    // that contained a debug update_option() call serialising the entire
+    // WC session object to the database.
 
 }

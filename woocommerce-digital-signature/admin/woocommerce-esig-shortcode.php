@@ -57,9 +57,8 @@ if (!class_exists('ESIG_WOOCOMMERCE_Shortcode')) :
 
         final function esignature_content($docContent, $docId) {
 
-          
             $order_id = esig_woo_logic::get_after_checkout_order_id();
-           
+
             if (!$order_id) {
                 $invitation = WP_E_Sig()->invite->getInviteBy('document_id', $docId);
                 if (!$invitation) {
@@ -71,6 +70,17 @@ if (!class_exists('ESIG_WOOCOMMERCE_Shortcode')) :
             if (!$order_id) {
                 return $docContent;
             }
+
+            // Security fix: when the order ID came from the cookie (no invitation),
+            // verify the current user owns it before substituting PII into the document.
+            if ( ! current_user_can( 'manage_woocommerce' ) ) {
+                $order_obj = wc_get_order( $order_id );
+                $current_user_id = get_current_user_id();
+                if ( ! $order_obj || ( $current_user_id > 0 && (int) $order_obj->get_customer_id() !== $current_user_id ) ) {
+                    return $docContent;
+                }
+            }
+
             $data = esig_woo_logic::orderDetails($order_id);
             $latestContent = WP_E_View::instance()->replace_variable($docContent, $data);
             return $latestContent;
@@ -209,7 +219,10 @@ if (!class_exists('ESIG_WOOCOMMERCE_Shortcode')) :
                 $invitation = $api->invite->getInviteBy('document_id', $document_id);
             }
 
-            if (ESIG_GET('esigpreview')) {
+            // esigpreview is an admin-only feature: restrict it to shop managers so
+            // that arbitrary visitors cannot pass ?esigpreview=1&document_id=X to
+            // pull order PII for any document in the system.
+            if (ESIG_GET('esigpreview') && current_user_can('manage_woocommerce')) {
                 $document_id = ESIG_GET('document_id');
                 $invitation = $api->invite->getInviteBy('document_id', $document_id);
             }
@@ -222,22 +235,42 @@ if (!class_exists('ESIG_WOOCOMMERCE_Shortcode')) :
 
             if (isset($invitation)) {
                 $order_id = $this->get_esig_order_id($invitation->document_id, $invitation->invitation_id);
-               
+
             } else {
                 global $esig_woo_document_id, $esig_woo_order_id;
                 if (!is_null($esig_woo_document_id) && !is_null($esig_woo_order_id)) {
                     $order_id = $esig_woo_order_id;
                 } else {
                     $order_id = esig_woo_logic::get_after_checkout_order_id();
-                } 
+                }
             }
 
             if (!$order_id) {
                 return "";
             }
-       
-           if ( !get_post_status ( $order_id ) ) {
-               
+
+            // Security fix: verify the current user owns this order before displaying PII.
+            // Admins/shop managers bypass this check so they can preview orders.
+            if ( ! current_user_can( 'manage_woocommerce' ) ) {
+                $order_obj = wc_get_order( $order_id );
+                if ( ! $order_obj ) {
+                    return '';
+                }
+
+                $current_user_id = get_current_user_id();
+
+                if ( $current_user_id > 0 ) {
+                    // Logged-in user: the order must belong to them.
+                    if ( (int) $order_obj->get_customer_id() !== $current_user_id ) {
+                        return '';
+                    }
+                }
+                // Guest checkout: the order ID is now stored server-side in the
+                // WC session (set by save_after_checkout_order_id), so it cannot
+                // be forged by the client.  No additional check is needed.
+            }
+
+            if ( ! get_post_status( $order_id ) ) {
                return '<font color="red"><b>Error : Order not found<b></font>';
            }
    

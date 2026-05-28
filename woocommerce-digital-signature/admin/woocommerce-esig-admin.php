@@ -93,6 +93,10 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')):
 
             add_filter('woocommerce_add_cart_item', array($this, 'woo_add_to_cart'), 10, 2);
 
+            // Persist cart item agreement data to order item meta so it is readable
+            // from order objects after the cart is cleared at checkout.
+            add_action('woocommerce_checkout_create_order_line_item', array($this, 'save_cart_item_meta_to_order_item'), 10, 4);
+
             add_filter('esig_invite_not_sent', array($this, 'invite_not_sent'), 10, 2);
         }
 
@@ -273,7 +277,23 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')):
         }
 
         /**
-         *  New method added to handle after checkout logic with order status 
+         * Persist agreement cart item data to the WooCommerce order line item
+         * so it can be read from the order after the cart is cleared.
+         *
+         * @param WC_Order_Item_Product $item
+         * @param string                $_cart_item_key Unused — required by hook signature.
+         * @param array                 $values         Cart item data.
+         * @param WC_Order              $_order         Unused — required by hook signature.
+         */
+        public function save_cart_item_meta_to_order_item($item, $_cart_item_key, $values, $_order)
+        {
+            if (isset($values[self::PRODUCT_AGREEMENT])) {
+                $item->update_meta_data(self::PRODUCT_AGREEMENT, $values[self::PRODUCT_AGREEMENT]);
+            }
+        }
+
+        /**
+         *  New method added to handle after checkout logic with order status
          *  @since 1.8.1
          *  @param mixed $order_id
          */
@@ -281,10 +301,6 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')):
       public  function esig_after_order_status($order_id)
         {
             $order = wc_get_order($order_id);
-
-             $status = $order->get_status();
-
-             update_option("rupom", $status);
 
             $agreement_list = array();
 
@@ -305,8 +321,8 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')):
                     continue;
                 }
 
-                // Get e-sign agreement data from item meta
-                $esig_agreement = $order_item->get_meta('PRODUCT_AGREEMENT', true) ?: array();
+                // Get e-sign agreement data from item meta (saved by save_cart_item_meta_to_order_item)
+                $esig_agreement = $order_item->get_meta(self::PRODUCT_AGREEMENT, true) ?: [];
                 $agreement_logic = $esig_agreement['agreement_logic'] ?? null;
                 $agreement_signed = $esig_agreement['signed'] ?? null;
 
@@ -326,12 +342,20 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')):
                 }
             }
 
-            // Handle global document
-            $global_document_id = esig_woo_logic::get_global_doc_id_from_session('after_checkout');
-            if ($global_document_id) {
-                $agreement_id = esig_woo_logic::clone_document($global_document_id, $order_id);
-                if ($agreement_id) {
-                    $agreement_list[$agreement_id] = 'no';
+            // Handle global document.
+            // IMPORTANT: the WC cart is already empty when this method fires via
+            // woocommerce_order_status_changed, so we cannot rely on the cart
+            // session to detect the global agreement.  Read directly from options.
+            if (esig_woo_logic::is_global_agreement_enabled()) {
+                $global_logic = esig_woo_logic::get_global_logic();
+                if ($global_logic === 'after_checkout') {
+                    $global_document_id = esig_woo_logic::get_global_agreement_id();
+                    if ($global_document_id) {
+                        $agreement_id = esig_woo_logic::clone_document($global_document_id, $order_id);
+                        if ($agreement_id) {
+                            $agreement_list[$agreement_id] = 'no';
+                        }
+                    }
                 }
             }
 
@@ -641,16 +665,17 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')):
 
         public function esig_new_woo_order($order_id)
         {
-            global $woocommerce;
-            // order id temporary 
+            // order id temporary
             $order_id = esig_woo_logic::orderIdValid($order_id);
             esig_woo_logic::save_temp_order_id($order_id);
-            if (is_array($woocommerce->cart->cart_contents) && sizeof($woocommerce->cart->cart_contents) > 0) {
 
-                foreach ($woocommerce->cart->get_cart() as $cart_item_key => $cart_item) {
+            if (!is_null(WC()->cart) && is_array(WC()->cart->cart_contents) && sizeof(WC()->cart->cart_contents) > 0) {
+
+                foreach (WC()->cart->get_cart() as $cart_item) {
                     if (isset($cart_item[self::PRODUCT_AGREEMENT]) && is_array($cart_item[self::PRODUCT_AGREEMENT])) {
                         $esig_agreement = $cart_item[self::PRODUCT_AGREEMENT];
-                        if (isset($esig_agreement['document_id']) && isset($esig_agreement['signed']) == 'yes') {
+                        // Bug-fix: was `isset(...) == 'yes'` which is always true.
+                        if (isset($esig_agreement['document_id']) && isset($esig_agreement['signed']) && $esig_agreement['signed'] == 'yes') {
                             esig_woo_logic::save_document_meta($esig_agreement['document_id'], $order_id);
                         }
                     }
@@ -659,7 +684,8 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')):
 
             if (esig_woo_logic::is_global_agreement_enabled()) {
                 $global_agreement = esig_woo_logic::get_global_agreement();
-                if (isset($global_agreement['signed']) == 'yes' and isset($global_agreement['document_id'])) {
+                // Bug-fix: was `isset(...) == 'yes'` which is always true.
+                if (isset($global_agreement['signed']) && $global_agreement['signed'] == 'yes' && isset($global_agreement['document_id'])) {
                     esig_woo_logic::save_document_meta($global_agreement['document_id'], $order_id);
                 }
             }

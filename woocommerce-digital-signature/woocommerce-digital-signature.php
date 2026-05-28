@@ -7,15 +7,15 @@
  * Plugin Name:       WP E-Signature - WooCommerce by ApproveMe.com
  * Plugin URI:        http://aprv.me/2l9JldC
  * Description:       This add-on lets you require customers sign one (or more) legally binding contracts before they can complete their WooCommerce checkout process.
- * Version:           2.0
+ * Version:           2.0.1
  * Author:            ApproveMe.com
  * Author URI:        http://aprv.me/2l9JldC
  * Text Domain:       esig-woocommerce
  * Domain Path:       /languages
  * License/Terms & Conditions: https://www.approveme.com/terms-conditions/
  * Privacy Policy: https://www.approveme.com/privacy-policy/
- * Tested up to: 6.9
- * WC tested up to: 10.9
+ * Tested up to: 7.0
+ * WC tested up to: 10.8
  * WC requires at least: 8.0
  */
 // If this file is called directly, abort.

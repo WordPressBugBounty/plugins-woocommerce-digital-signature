@@ -215,14 +215,16 @@ class esig_woo_logic {
             // maybe json?
             $is_json = json_decode($data, ARRAY_A);
             if (!empty($is_json) && is_array($is_json)) {
-                $docList = $is_json;
+                return $is_json;
             } else {
-                $docList = esc_html(stripslashes_deep($field_value));
+                // Not JSON — return empty array to avoid operating on garbage data.
+                return array();
             }
         }
         if (is_array($data)) {
             return $data;
         }
+        return array();
     }
 
     public static function saveMetaDoclist($order_id, $doc_list) {
@@ -274,18 +276,27 @@ class esig_woo_logic {
 
     public static function save_after_checkout_order_id($order_id) {
         $orderId = self::orderIdValid($order_id);
-        esig_setcookie('esig-aftercheckout-order-id', $orderId, 60 * 60 * 1);
+        // Use the server-side WC session instead of a client-readable cookie so
+        // the order ID cannot be tampered with or enumerated by an attacker.
+        if ( ! is_null( WC()->session ) ) {
+            WC()->session->set( 'esig_after_checkout_order_id', (int) $orderId );
+        }
     }
 
     public static function get_after_checkout_order_id() {
-        if (ESIG_COOKIE('esig-aftercheckout-order-id')) {
-            return ESIG_COOKIE('esig-aftercheckout-order-id');
+        if ( ! is_null( WC()->session ) ) {
+            $order_id = WC()->session->get( 'esig_after_checkout_order_id' );
+            if ( $order_id ) {
+                return (int) $order_id;
+            }
         }
         return false;
     }
 
     public static function remove_after_checkout_order_id() {
-        esig_unsetcookie('esig-aftercheckout-order-id', COOKIEPATH);
+        if ( ! is_null( WC()->session ) ) {
+            WC()->session->set( 'esig_after_checkout_order_id', null );
+        }
     }
 
     public static function orderDetails($orderId) {
@@ -625,14 +636,13 @@ class esig_woo_logic {
 
          public static function orderHasAgreement($orderId)
          {
-                  $hasAgreement =  get_post_meta($orderId, 'has_esig_agreement',true); 
+                  $hasAgreement =  get_post_meta($orderId, 'has_esig_agreement',true);
                   if($hasAgreement)
                   {
-                      update_option("rupom","working");
                       return true;
                   }
-       
-                  return false ; 
+
+                  return false ;
          }
 
          /**
@@ -718,12 +728,12 @@ class esig_woo_logic {
             {
                 return true;
             }
-            // Get the requested URL
-            $requested_url = $_SERVER['REQUEST_URI'];
-            // Get the checkout URL
-            $checkout_url = wc_get_checkout_url();
-            // Check if the requested URL is the checkout URL
-            if (strpos($requested_url, $checkout_url) !== false) {
+            // Compare only the path portions so the check works regardless of scheme/host.
+            $requested_path = isset( $_SERVER['REQUEST_URI'] )
+                ? esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) )
+                : '';
+            $checkout_path  = (string) wp_parse_url( wc_get_checkout_url(), PHP_URL_PATH );
+            if ( $checkout_path !== '' && strpos( $requested_path, $checkout_path ) !== false ) {
                 return true;
             }
             
@@ -733,6 +743,10 @@ class esig_woo_logic {
     // Conditional function that check if Checkout page use Checkout Blocks
     public static function is_checkout_block()
     {
+        // Guard against environments where the WC Blocks package is unavailable.
+        if (!class_exists('WC_Blocks_Utils')) {
+            return false;
+        }
         return WC_Blocks_Utils::has_block_in_page(wc_get_page_id('checkout'), 'woocommerce/checkout');
     }
 
