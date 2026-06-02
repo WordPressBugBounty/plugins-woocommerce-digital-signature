@@ -160,7 +160,14 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')):
                 return false;
             }
 
-            //  run check after 
+            // If the doc list was never saved — which happens when a deposit plugin
+            // (e.g. YITH Deposits) changes the order status directly to 'completed',
+            // bypassing the configured on-hold / processing trigger — build it now
+            // from the order's saved items so the redirect can still fire.
+            if (!esig_woo_logic::is_after_checkout_enable($order_id)) {
+                $this->esig_after_order_status($order_id);
+            }
+
             $this->esig_checkout_after($order_id);
 
 
@@ -168,26 +175,30 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')):
 
         public function payment_status($order_id, $old_status, $new_status, $order)
         {
-            $esigStatusCondition  = esig_woo_logic::get_after_checkout_condition();
-
             if (!$order_id || !$order) {
                 return false;
             }
+
+            // Skip balance/suborders created by deposit plugins (e.g. YITH Deposits).
+            // These child orders share the same products as the parent; processing them
+            // would clone documents under the wrong order ID and create duplicates.
+            if ($order instanceof WC_Order && $order->get_parent_id()) {
+                return false;
+            }
+
+            $esigStatusCondition  = esig_woo_logic::get_after_checkout_condition();
 
             if( $esigStatusCondition == "always") {
                 $this->esig_after_order_status($order_id);
                 return;
             }
 
-            //$status = $order->get_status();
             if( $new_status == $esigStatusCondition)
             {
                 $this->esig_after_order_status($order_id);
             }
 
             return;
-           
-            
         }
 
         /**
@@ -513,6 +524,10 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')):
 
             if ($sad_page) {
 
+                // Signal to the client that this is a WooCommerce multi-agreement
+                // redirect so the success popup is suppressed on the next agreement page.
+                $sad_page = add_query_arg('esig_woo_redirect', '1', $sad_page);
+
                 if (esig_ajax_request()) {
 
                     wp_send_json_success(array(
@@ -547,6 +562,7 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')):
             $admin_screens = array(
                 'dashboard_page_esign-woocommerce-about',
                 'woocommerce_page_wc-settings',
+                'woocommerce_page_esign',
                 'e-signature_page_esign-woo',
                 'e-signature_page_esign-woocommerce',
             );
@@ -721,12 +737,16 @@ if (!class_exists('ESIG_WOOCOMMERCE_Admin')):
 
                     $order = wc_get_order($result);
                     $return_url = $this->get_return_url($order);
-                    wp_send_json_success(array(
+                    $response = array(
                         'redirect' => $return_url,
                         'message' => __('Document signed successfully.', 'esig'),
                         'success' => true,
                         'document_id' => $docId,
-                    ));
+                    );
+                    // Allow add-ons (e.g. URL Redirect After Signing) to override the
+                    // redirect URL now that all WooCommerce documents have been signed.
+                    $response = apply_filters('wpesignature_process_response', $response, $docId);
+                    wp_send_json_success($response);
 
                     exit;
                 }

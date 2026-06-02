@@ -4,10 +4,10 @@
  * @package   	      WP E-Signature - WooCommerce
  * @contributors	  Kevin Michael Gray (Approve Me), Abu Shoaib (Approve Me)
  * @wordpress-plugin
- * Plugin Name:       WP E-Signature - WooCommerce by ApproveMe.com
+ * Plugin Name:       Digital Signature Add-on for WooCommerce
  * Plugin URI:        http://aprv.me/2l9JldC
  * Description:       This add-on lets you require customers sign one (or more) legally binding contracts before they can complete their WooCommerce checkout process.
- * Version:           2.0.1
+ * Version:           2.0.2
  * Author:            ApproveMe.com
  * Author URI:        http://aprv.me/2l9JldC
  * Text Domain:       esig-woocommerce
@@ -105,7 +105,8 @@ add_action('admin_enqueue_scripts', 'enqueue_woo_admin_about_scripts');
 function enqueue_woo_admin_about_scripts() {
     $screen = get_current_screen();
    
-    if (str_contains(esig_woocommerce_get("id",$screen), 'esign-woocommerce-about')){
+    $screen_id = $screen ? esig_woocommerce_get( 'id', $screen ) : '';
+    if ( $screen_id && ( strpos( $screen_id, 'esign-woocommerce-about' ) !== false || 'woocommerce_page_esign' === $screen_id ) ) {
         wp_enqueue_style( 'esig-woocommerce-google-fonts', 'https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@200;300;400;600;700;900&display=swap', false );
         wp_enqueue_script('esign-woocommerce-iframe-script', plugins_url('admin/assets/js/esign-iframe.js', __FILE__), array('jquery', 'jquery-ui-dialog'), '0.0.1', true);
         wp_enqueue_style( 'esig-woocommerce-snip-styles', plugins_url('admin/about/assets/css/esig-snip-styles.css', __FILE__), false, '0.0.1' );

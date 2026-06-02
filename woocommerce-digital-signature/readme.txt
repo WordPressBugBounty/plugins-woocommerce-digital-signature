@@ -1,10 +1,10 @@
-=== WooCommerce Digital Signature === 
+=== Digital Signature Add-on for WooCommerce ===
 Contributors: approveme
 Tags:  WooCommerce, Electronic Signature, electronic signatures Digital Signature,  Terms of Service and Privacy Policy, e-signature, e-signatures, Sign Documents Online, sign document, e-signatures, sign contract
 Requires at least: 5.1
 Tested up to: 7.0
-Stable tag: 2.0.1
-Version: 2.0.1
+Stable tag: 2.0.2
+Version: 2.0.2
 
 Automatically require your WooCommerce customers to sign a legally binding contract before downloading your product. Easy to Use.
 
@@ -232,6 +232,11 @@ Please report security bugs found in the source code of the Signature Add-On for
 **[Try WooCommerce Signature Demo Here](http://www.secure.approveme.com/demo/?utm_source=wprepo&utm_medium=link&utm_campaign=woocommerce)**
 
 == Changelog ==
+Version 2.0.2
+FIX: WordPress.org trademark violation - rename plugin display name
+FIX: CSS not loading on WooCommerce E-Signature admin page
+
+
 Version 2.0.1
 SECURITY: Moved session data from client cookies to server-side WooCommerce sessions..
 FIX: Document redirection issue . 
