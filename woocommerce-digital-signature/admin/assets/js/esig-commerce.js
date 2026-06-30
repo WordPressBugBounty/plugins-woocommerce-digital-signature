@@ -8,6 +8,45 @@
 
 (function ($) {
 
+    /**
+     * Insert content into the document editor, handling both Visual and Code/Text modes.
+     *
+     * When the editor is in Code/Text mode tinymce.get() returns null, which
+     * causes a fatal JS error. This helper falls back to direct textarea insertion
+     * so shortcodes are always placed at the cursor position regardless of mode.
+     *
+     * @since  2.0.3
+     *
+     * @param  {string} content  Shortcode or HTML string to insert.
+     * @return {void}
+     */
+    function esigInsertContent( content ) {
+        var editor = ( typeof tinymce !== 'undefined' ) ? tinymce.get( 'document_content' ) : null;
+
+        if ( editor && ! editor.isHidden() ) {
+            // Visual (WYSIWYG) mode — use the TinyMCE API.
+            editor.insertContent( content );
+            return;
+        }
+
+        // Code/Text mode — write directly into the visible textarea.
+        var textarea = document.getElementById( 'document_content' );
+        if ( ! textarea ) {
+            return;
+        }
+
+        var start = textarea.selectionStart || 0;
+        var end   = textarea.selectionEnd   || start;
+        var text  = textarea.value          || '';
+
+        textarea.value = text.substring( 0, start ) + content + text.substring( end );
+        textarea.selectionStart = textarea.selectionEnd = start + content.length;
+        textarea.focus();
+
+        // Notify WordPress auto-save and other listeners that the content changed.
+        textarea.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+    }
+
     // next step click from sif pop
 
     // gravity add to document button clicked 
@@ -29,7 +68,7 @@
         else {
             return_text = '{{' + tagValue + '}}';
         }
-         tinymce.get('document_content').insertContent(return_text);
+         esigInsertContent( return_text );
 
         tb_remove();
     });
@@ -84,18 +123,41 @@
 
     $('#esig-woo-unsigned-agreement-send').click(function (e) {
         e.preventDefault();
-        if ($("#esig-woo-unsigned-agreement-send").hasClass("already-created")) {
+
+        var $btn = $( '#esig-woo-unsigned-agreement-send' );
+
+        if ( $btn.prop( 'disabled' ) ) {
             return false;
         }
-        var orderId = $("#esig_woo_order_id").val();
 
-        $.post(wc_enhanced_select_params.ajax_url + "?action=esig_create_order_agreement", {esig_woo_order: orderId, esig_woo_nonce: esig_woo_params.esig_woo_order_nonce}).done(function (data) {
-            if (data == "success") {
-                $("#esig-woo-unsigned-agreement-send").addClass("already-created");
-                $("#esig-woo-unsigned-agreement-send").html("Sucessfully sent");
+        var orderId  = $( '#esig_woo_order_id' ).val();
+        var origText = $btn.text();
+
+        // Disable immediately to block rapid double-clicks that would create
+        // duplicate document copies before the guard meta is persisted.
+        $btn.prop( 'disabled', true ).text( 'Sending…' );
+
+        // Use the WordPress global ajaxurl rather than wc_enhanced_select_params
+        // which may not be defined on all admin screens (e.g. HPOS order pages).
+        $.post(
+            ajaxurl,
+            {
+                action:          'esig_create_order_agreement',
+                esig_woo_order:  orderId,
+                esig_woo_nonce:  esig_woo_params.esig_woo_order_nonce
             }
+        ).done(function ( response ) {
+            if ( response && response.success ) {
+                // Reload so the meta box reflects the new "Resend" state.
+                window.location.reload();
+            } else {
+                alert( 'Could not send the agreement. Please try again.' );
+                $btn.prop( 'disabled', false ).text( origText );
+            }
+        }).fail(function () {
+            alert( 'Request failed. Please try again.' );
+            $btn.prop( 'disabled', false ).text( origText );
         });
-
     });
 
 
