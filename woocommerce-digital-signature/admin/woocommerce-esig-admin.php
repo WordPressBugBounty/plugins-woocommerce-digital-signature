@@ -131,10 +131,20 @@ if ( ! class_exists( 'ESIG_WOOCOMMERCE_Admin' ) ) :
 		 * This method is responsible for handling the order received event in the WooCommerce Digital Signature plugin.
 		 * It is called when an order is received and performs necessary actions related to digital signatures.
 		 *
+		 * Uses the internal WooCommerce query var name 'order-received' directly rather than reading
+		 * the woocommerce_checkout_order_received_endpoint option, because translation plugins (WPML,
+		 * Polylang) intercept get_option() and return a translated slug. is_wc_endpoint_url() checks
+		 * $wp->query_vars, whose key is always the untranslated 'order-received' regardless of locale,
+		 * so passing a translated slug would always return false on multilingual sites.
+		 *
 		 * @since 2022
 		 * @access public
 		 */
 		public function order_received() {
+
+			if ( ! function_exists( 'WP_E_Sig' ) ) {
+				return false;
+			}
 
 			// get current page id
 			if ( ! esig_woo_logic::isCheckoutPage() ) {
@@ -142,8 +152,10 @@ if ( ! class_exists( 'ESIG_WOOCOMMERCE_Admin' ) ) :
 				return false;
 			}
 
-			$orderRecieved = get_option( 'woocommerce_checkout_order_received_endpoint' );
-			if ( ! is_wc_endpoint_url( $orderRecieved ) ) {
+			// Always use the internal WC query var key — never the option value, which translation
+			// plugins (WPML, Polylang) may return as a translated slug that is unknown to WC's
+			// query var registry, causing this check to fail on multilingual sites.
+			if ( ! is_wc_endpoint_url( 'order-received' ) ) {
 				return false;
 			}
 
@@ -173,6 +185,10 @@ if ( ! class_exists( 'ESIG_WOOCOMMERCE_Admin' ) ) :
 		}
 
 		public function payment_status( $order_id, $old_status, $new_status, $order ) {
+			if ( ! function_exists( 'WP_E_Sig' ) ) {
+				return false;
+			}
+
 			if ( ! $order_id || ! $order ) {
 				return false;
 			}
@@ -241,6 +257,10 @@ if ( ! class_exists( 'ESIG_WOOCOMMERCE_Admin' ) ) :
 		}
 
 		public function invite_not_sent( $ret, $document_id ) {
+			if ( ! function_exists( 'WP_E_Sig' ) ) {
+				return $ret;
+			}
+
 			$docCheckSum = WP_E_Sig()->meta->get( $document_id, 'esig-woo-document-checksum' );
 			$inviteHash  = WP_E_Sig()->meta->get( $document_id, 'esig-woo-invite-hash' );
 			if ( empty( $docCheckSum ) && empty( $inviteHash ) ) {
@@ -720,6 +740,10 @@ if ( ! class_exists( 'ESIG_WOOCOMMERCE_Admin' ) ) :
 		}
 
 		public function esig_new_woo_order( $order_id ) {
+			if ( ! function_exists( 'WP_E_Sig' ) ) {
+				return false;
+			}
+
 			// order id temporary
 			$order_id = esig_woo_logic::orderIdValid( $order_id );
 			esig_woo_logic::save_temp_order_id( $order_id );
@@ -749,6 +773,9 @@ if ( ! class_exists( 'ESIG_WOOCOMMERCE_Admin' ) ) :
 		}
 
 		public function signature_process_done( $args ) {
+			if ( ! function_exists( 'WP_E_Sig' ) ) {
+				return false;
+			}
 
 			$docId      = esig_woocommerce_sanitize_init( esig_woocommerce_get( 'document_id', $args ) );
 			$sad_doc_id = esig_woocommerce_sanitize_init( esig_woocommerce_get( 'sad_doc_id', $args ) );

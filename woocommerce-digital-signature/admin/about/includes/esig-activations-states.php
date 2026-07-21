@@ -23,6 +23,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 if(!function_exists('esig_get_activation_state')) {
     
+    /**
+     * Determine the WP E-Signature core and Business Add-ons activation state.
+     *
+     * Uses the Business Add-ons bootstrap function so active installs are detected
+     * regardless of their plugin directory name or network activation status.
+     *
+     * @since x.x.x
+     *
+     * @return string The current E-Signature activation state.
+     */
     function esig_get_activation_state(){
 
 
@@ -44,24 +54,11 @@ if(!function_exists('esig_get_activation_state')) {
 
             }
 
-            if (file_exists(WP_PLUGIN_DIR . '/wpesignature-add-ons/wpesignature-add-ons.php') && is_plugin_active("wpesignature-add-ons/wpesignature-add-ons.php")) {
-
-                return 'wpe_active_pro';  // wp e-signature is installed, active, AND has pro addons
-
-            } else if (!function_exists("esig_business_pack_activate")) {
-
-                return "wpe_inactive_pro"; // wp e-signature is installed , pro installed but not active but user has active license    
-
-            } else if (file_exists(WP_PLUGIN_DIR . '/e-signature-business-add-ons/e-signature-business-add-ons.php') && is_plugin_active("e-signature-business-add-ons/e-signature-business-add-ons.php")) {
-
-                return 'wpe_active_pro';  // wp e-signature is installed, active, AND has pro addons
-
-            } 
-            else{
-
-                return 'wpe_active_basic'; // wp e-signature is installed, active, does not have pro addons
-
+            if ( function_exists( 'esig_business_pack_activate' ) ) {
+                return 'wpe_active_pro'; // WP E-Signature Business Add-ons is loaded.
             }
+
+            return 'wpe_inactive_pro'; // WP E-Signature Business Add-ons is not loaded.
         }
     }
 

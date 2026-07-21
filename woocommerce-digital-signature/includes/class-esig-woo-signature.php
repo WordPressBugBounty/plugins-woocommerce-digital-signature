@@ -50,7 +50,23 @@ class esig_woo_logic {
 		return $sad->get_sad_id( $sad_page_id );
 	}
 
+	/**
+	 * Resolve the stand-alone document page ID for a given agreement ID.
+	 *
+	 * Returns false when Business Add-ons is inactive and esig_sad_document
+	 * is unavailable, instead of causing a PHP fatal error.
+	 *
+	 * @since 2.0.3
+	 *
+	 * @param int $agreement_id Document/agreement ID.
+	 *
+	 * @return int|false Page ID on success, false when the SAD class is missing.
+	 */
 	public static function get_sad_page_id( $agreement_id ) {
+		if ( ! class_exists( 'esig_sad_document' ) ) {
+			return false;
+		}
+
 		$sad = new esig_sad_document();
 		return $sad->get_sad_page_id( $agreement_id );
 	}
@@ -212,7 +228,20 @@ class esig_woo_logic {
 		return false;
 	}
 
+	/**
+	 * Save the WooCommerce order ID as meta on an e-signature document.
+	 *
+	 * @since 2.0.3
+	 *
+	 * @param int $document_id E-signature document ID.
+	 * @param int $order_id    WooCommerce order ID.
+	 *
+	 * @return void
+	 */
 	public static function save_document_meta( $document_id, $order_id ) {
+		if ( ! function_exists( 'WP_E_Sig' ) ) {
+			return;
+		}
 		WP_E_Sig()->meta->add( $document_id, 'esig-order_id', $order_id );
 	}
 
@@ -305,7 +334,19 @@ class esig_woo_logic {
 		}
 	}
 
+	/**
+	 * Build an associative array of WooCommerce order details for use in document shortcodes.
+	 *
+	 * @since 2.0.3
+	 *
+	 * @param int $orderId WooCommerce order ID.
+	 *
+	 * @return array Order details array, or empty array if core plugin is inactive.
+	 */
 	public static function orderDetails( $orderId ) {
+		if ( ! function_exists( 'WP_E_Sig' ) ) {
+			return array();
+		}
 
 		if ( ! get_post_status( $orderId ) ) {
 				return false;
@@ -436,7 +477,23 @@ class esig_woo_logic {
 		}
 	}
 
+	/**
+	 * Clone a stand-alone document template and attach it to a WooCommerce order.
+	 *
+	 * Creates a copy of the template document, adds the customer as a signer,
+	 * saves invitation metadata, and returns the new document ID.
+	 *
+	 * @since 2.0.3
+	 *
+	 * @param int $sadDocId Template document ID to clone.
+	 * @param int $orderId  WooCommerce order ID to attach the cloned document to.
+	 *
+	 * @return int|false New document ID on success, false if core plugin is inactive or clone fails.
+	 */
 	public static function clone_document( $sadDocId, $orderId ) {
+		if ( ! function_exists( 'WP_E_Sig' ) ) {
+			return false;
+		}
 
 		if ( ! $orderId ) {
 			return false;
@@ -541,7 +598,19 @@ class esig_woo_logic {
 		return 'on-hold';
 	}
 
+	/**
+	 * Get the signing URL for a cloned document after checkout.
+	 *
+	 * @since 2.0.3
+	 *
+	 * @param int $docId Document ID.
+	 *
+	 * @return string|false Signing URL on success, false if core plugin is inactive or meta is missing.
+	 */
 	public static function inviteLinkAfterCheckout( $docId ) {
+		if ( ! function_exists( 'WP_E_Sig' ) ) {
+			return false;
+		}
 
 		$docCheckSum = WP_E_Sig()->meta->get( $docId, 'esig-woo-document-checksum' );
 		$inviteHash  = WP_E_Sig()->meta->get( $docId, 'esig-woo-invite-hash' );

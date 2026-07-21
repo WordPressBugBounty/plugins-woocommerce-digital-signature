@@ -342,6 +342,9 @@ class esig_hold_payment {
 	 * @return string Escaped admin URL.
 	 */
 	private function get_resend_url( $invitation_id, $order_id ) {
+		if ( ! function_exists( 'WP_E_Sig' ) ) {
+			return '';
+		}
 		$document_id = WP_E_Sig()->invite->getdocumentid_By_inviteid( $invitation_id );
 
 		// Build a return URL that is compatible with both classic and HPOS.
@@ -391,6 +394,9 @@ class esig_hold_payment {
 	 * @return string Document title, or empty string if not found.
 	 */
 	private function document_title( $invitation_id ) {
+		if ( ! function_exists( 'WP_E_Sig' ) ) {
+			return '';
+		}
 		$document_id = WP_E_Sig()->invite->getdocumentid_By_inviteid( $invitation_id );
 		$doc         = WP_E_Sig()->document->getDocument( $document_id );
 		return isset( $doc->document_title ) ? $doc->document_title : '';
@@ -407,6 +413,9 @@ class esig_hold_payment {
 	 * @return bool True if the document has been signed, false otherwise.
 	 */
 	private function is_signed_doc( $invitation_id ) {
+		if ( ! function_exists( 'WP_E_Sig' ) ) {
+			return false;
+		}
 		$invite = WP_E_Sig()->invite->getInviteBy( 'invitation_id', $invitation_id );
 		if ( ! is_object( $invite ) ) {
 			return false;

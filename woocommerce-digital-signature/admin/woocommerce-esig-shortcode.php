@@ -200,6 +200,18 @@ if (!class_exists('ESIG_WOOCOMMERCE_Shortcode')) :
              
         }
 
+        /**
+         * Render the [esig-woo-order-details] shortcode with order data for the current document.
+         *
+         * Resolves the WooCommerce order from the invite/preview URL using esigget() so
+         * wpesig-encoded signing links decode correctly (ESIG_GET only reads literal params).
+         *
+         * @since 2.0.3
+         *
+         * @param array $atts Shortcode attributes (unused).
+         *
+         * @return string Order details HTML, or empty string when order cannot be resolved.
+         */
         public function esig_order_details($atts) {
 
 
@@ -208,22 +220,23 @@ if (!class_exists('ESIG_WOOCOMMERCE_Shortcode')) :
             extract(shortcode_atts(array(
                             ), $atts, 'esig-woo-order-details'));
 
-            if (ESIG_GET('invite')) {
-                $invite_hash = ESIG_GET('invite');
+            $invite_hash = esigget('invite');
+            if ($invite_hash) {
                 $invitation = $api->invite->getInviteBy('invite_hash', $invite_hash);
                
             }
 
-            if (ESIG_GET('did')) {
-                $document_id = $api->document->document_id_by_csum(ESIG_GET('did'));
+            $did_checksum = esigget('did');
+            if ($did_checksum) {
+                $document_id = $api->document->document_id_by_csum($did_checksum);
                 $invitation = $api->invite->getInviteBy('document_id', $document_id);
             }
 
             // esigpreview is an admin-only feature: restrict it to shop managers so
             // that arbitrary visitors cannot pass ?esigpreview=1&document_id=X to
             // pull order PII for any document in the system.
-            if (ESIG_GET('esigpreview') && current_user_can('manage_woocommerce')) {
-                $document_id = ESIG_GET('document_id');
+            if (esigget('esigpreview') && current_user_can('manage_woocommerce')) {
+                $document_id = esigget('document_id');
                 $invitation = $api->invite->getInviteBy('document_id', $document_id);
             }
 

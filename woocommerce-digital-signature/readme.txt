@@ -3,8 +3,8 @@ Contributors: approveme
 Tags:  WooCommerce, Electronic Signature, electronic signatures Digital Signature,  Terms of Service and Privacy Policy, e-signature, e-signatures, Sign Documents Online, sign document, e-signatures, sign contract
 Requires at least: 5.1
 Tested up to: 7.0
-Stable tag: 2.0.3
-Version: 2.0.3
+Stable tag: 2.0.4
+Version: 2.0.4
 
 Automatically require your WooCommerce customers to sign a legally binding contract before downloading your product. Easy to Use.
 
@@ -232,6 +232,13 @@ Please report security bugs found in the source code of the Signature Add-On for
 **[Try WooCommerce Signature Demo Here](http://www.secure.approveme.com/demo/?utm_source=wprepo&utm_medium=link&utm_campaign=woocommerce)**
 
 == Changelog ==
+Version 2.0.4
+FIX: Order-received endpoint detection on translated sites.
+IMPROVED: Business Add-ons detection without relying on installation paths.
+FIX: Fatal errors when WP E-Signature core is inactive.
+FIX: Fatal errors when Business Add-ons is inactive.
+FIX: Encoded invitation URLs in the WooCommerce order details shortcode.
+
 
 Version 2.0.3
 FIX: Fix duplicate contract creation race condition at checkout
