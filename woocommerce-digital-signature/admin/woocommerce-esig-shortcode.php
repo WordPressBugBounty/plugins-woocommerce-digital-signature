@@ -206,6 +206,11 @@ if (!class_exists('ESIG_WOOCOMMERCE_Shortcode')) :
          * Resolves the WooCommerce order from the invite/preview URL using esigget() so
          * wpesig-encoded signing links decode correctly (ESIG_GET only reads literal params).
          *
+         * Reads the current document ID from the core plugin's request-scoped
+         * Document::current_document_id() stack (TRL-1608) instead of the legacy
+         * shared `esig_global_document_id` option, falling back to the option only
+         * when the stack has not been populated.
+         *
          * @since 2.0.3
          *
          * @param array $atts Shortcode attributes (unused).
@@ -240,10 +245,21 @@ if (!class_exists('ESIG_WOOCOMMERCE_Shortcode')) :
                 $invitation = $api->invite->getInviteBy('document_id', $document_id);
             }
 
-            if (get_option('esig_global_document_id')) {
-                $document_id = get_option('esig_global_document_id');
+            // Prefer the request-scoped stack from the core plugin (TRL-1608) so
+            // concurrent signings cannot clobber each other's document ID context.
+            // Fall back to the legacy shared option for any callers not yet migrated,
+            // or if the installed core build predates TRL-1608 (TRL-1644).
+            $global_document_id = null;
+            if (class_exists('\WpEsignature\Models\Document') && method_exists('\WpEsignature\Models\Document', 'current_document_id')) {
+                $global_document_id = \WpEsignature\Models\Document::current_document_id();
+            }
+            if (!$global_document_id) {
+                $global_document_id = get_option('esig_global_document_id') ?: null;
+            }
+            if ($global_document_id) {
+                $document_id = $global_document_id;
                 $invitation = $api->invite->getInviteBy('document_id', $document_id);
-                
+
             }
 
             if (isset($invitation)) {

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @package   	      WP E-Signature - WooCommerce
  * @contributors	  Kevin Michael Gray (Approve Me), Abu Shoaib (Approve Me)
@@ -6,7 +7,7 @@
  * Plugin Name:       Digital Signature Add-on for WooCommerce
  * Plugin URI:        http://aprv.me/2l9JldC
  * Description:       This add-on lets you require customers sign one (or more) legally binding contracts before they can complete their WooCommerce checkout process.
- * Version:           2.0.4
+ * Version:           2.0.5
  * Author:            ApproveMe.com
  * Author URI:        http://aprv.me/2l9JldC
  * Text Domain:       esig-woocommerce
